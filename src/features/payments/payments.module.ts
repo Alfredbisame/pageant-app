@@ -4,9 +4,22 @@ import {
   PaystackService,
   PaymentVerificationService,
 } from './payment-verification.service';
+import { PAYMENT_VERIFIERS } from './payment-verifier.interface';
 
 @Module({
-  providers: [PaystackService, HubtelService, PaymentVerificationService],
+  providers: [
+    PaystackService,
+    HubtelService,
+    {
+      provide: PAYMENT_VERIFIERS,
+      useFactory: (paystack: PaystackService, hubtel: HubtelService) => [
+        paystack,
+        hubtel,
+      ],
+      inject: [PaystackService, HubtelService],
+    },
+    PaymentVerificationService,
+  ],
   exports: [PaymentVerificationService],
 })
 export class PaymentsModule {}

@@ -30,6 +30,12 @@ export default () => ({
     hubtelClientSecret: process.env.HUBTEL_CLIENT_SECRET,
     pricePerVotePaise: parseInt(process.env.PRICE_PER_VOTE_PAISE ?? '100', 10),
   },
+  event: {
+    defaults: {
+      votingEnabled: false,
+      platformFeeRate: 0.025,
+    },
+  },
   seed: {
     adminEmail: process.env.SEED_ADMIN_EMAIL,
     adminPassword: process.env.SEED_ADMIN_PASSWORD,

@@ -1,14 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { PaymentProvider } from '@/common/constants';
-
-export interface ProviderVerificationResult {
-  success: boolean;
-  amount: number;
-  currency: string;
-  raw: Record<string, unknown>;
-}
+import {
+  PAYMENT_VERIFIERS,
+  PaymentVerifier,
+  ProviderVerificationResult,
+} from './payment-verifier.interface';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 interface PaystackTransactionData {
   status: string;
@@ -26,8 +25,12 @@ type HubtelVerifyResponse = {
 } & Record<string, unknown>;
 
 @Injectable()
-export class PaystackService {
+export class PaystackService implements PaymentVerifier {
   constructor(private readonly configService: ConfigService) {}
+
+  supports(provider: PaymentProvider) {
+    return provider === PaymentProvider.PAYSTACK || provider === PaymentProvider.USSD;
+  }
 
   async verify(reference: string): Promise<ProviderVerificationResult> {
     const secretKey = this.configService.get<string>(
@@ -54,8 +57,12 @@ export class PaystackService {
 }
 
 @Injectable()
-export class HubtelService {
+export class HubtelService implements PaymentVerifier {
   constructor(private readonly configService: ConfigService) {}
+
+  supports(provider: PaymentProvider) {
+    return provider === PaymentProvider.HUBTEL;
+  }
 
   async verify(reference: string): Promise<ProviderVerificationResult> {
     const clientId = this.configService.get<string>('payments.hubtelClientId');
@@ -85,20 +92,19 @@ export class HubtelService {
 @Injectable()
 export class PaymentVerificationService {
   constructor(
-    private readonly paystackService: PaystackService,
-    private readonly hubtelService: HubtelService,
+    @Inject(PAYMENT_VERIFIERS) private readonly verifiers: PaymentVerifier[],
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
   ) {}
 
   verify(provider: PaymentProvider, reference: string) {
-    switch (provider) {
-      case PaymentProvider.PAYSTACK:
-        return this.paystackService.verify(reference);
-      case PaymentProvider.HUBTEL:
-        return this.hubtelService.verify(reference);
-      case PaymentProvider.USSD:
-        return this.paystackService.verify(reference);
-      default:
-        throw new Error(`Unsupported provider: ${provider as string}`);
+    const verifier = this.verifiers.find((v) => v.supports(provider));
+    if (!verifier) {
+      this.logger.error(
+        `No payment verifier registered for provider: ${provider as string}`,
+      );
+      throw new Error(`Unsupported provider: ${provider as string}`);
     }
+    return verifier.verify(reference);
   }
 }
