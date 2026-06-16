@@ -52,10 +52,10 @@ async function bootstrap() {
   setupSwagger(app, apiPrefix);
 
   await app.listen(port);
-  logger.log(
-    `ELL Pageant API listening on port ${port} (prefix: /${apiPrefix})`,
-  );
-  logger.log(`Swagger docs: /${apiPrefix}/docs`);
+
+  const baseUrl = `http://localhost:${port}`;
+  logger.log(`ELL Pageant API: ${baseUrl}/${apiPrefix}`);
+  logger.log(`Swagger docs: ${baseUrl}/${apiPrefix}/docs`);
   logger.log(`CORS origins: ${allowedOrigins.join(', ')}`);
 }
 
