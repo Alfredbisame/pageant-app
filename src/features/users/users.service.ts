@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { UserRepository } from '@/shared/repositories/user.repository';
-import { UserStatus } from '@/common/constants';
+import { UserRole, UserStatus } from '@/common/constants';
 import { UpdateProfileDto } from './dto/users.dto';
 
 @Injectable()
@@ -47,7 +47,7 @@ export class UsersService {
     };
   }
 
-  async updateRole(userId: string, role: string) {
+  async updateRole(userId: string, role: UserRole) {
     const user = await this.userRepository.updateById(userId, {
       role,
     });

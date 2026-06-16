@@ -4,6 +4,14 @@ export enum UserRole {
   ADMIN = 'admin',
 }
 
+export const ADMIN_ROLES = [UserRole.ADMIN, UserRole.STAFF] as const;
+
+export type AdminRole = (typeof ADMIN_ROLES)[number];
+
+export function isAdminRole(role: UserRole): role is AdminRole {
+  return role === UserRole.ADMIN || role === UserRole.STAFF;
+}
+
 export enum UserStatus {
   ACTIVE = 'active',
   SUSPENDED = 'suspended',

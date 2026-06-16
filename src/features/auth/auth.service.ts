@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -9,13 +10,23 @@ import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { createHash, randomBytes } from 'crypto';
 import { UserRepository } from '@/shared/repositories/user.repository';
-import { UserRole, UserStatus } from '@/common/constants';
+import { isAdminRole, UserRole, UserStatus } from '@/common/constants';
 import {
+  AdminLoginDto,
+  AdminRegisterDto,
   ForgotPasswordDto,
   LoginDto,
   RegisterDto,
   ResetPasswordDto,
 } from './dto/auth.dto';
+import type { AuthenticatedUser } from '@/common/types';
+
+interface CreateUserInput {
+  fullName: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
 
 @Injectable()
 export class AuthService {
@@ -26,17 +37,71 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const existing = await this.userRepository.findByEmail(dto.email);
+    return this.createUser({
+      fullName: dto.fullName,
+      email: dto.email,
+      password: dto.password,
+      role: UserRole.VOTER,
+    });
+  }
+
+  async registerAdmin(dto: AdminRegisterDto, actor?: AuthenticatedUser) {
+    if (!isAdminRole(dto.role)) {
+      throw new BadRequestException('Role must be admin or staff');
+    }
+
+    const adminCount = await this.userRepository.count({
+      role: UserRole.ADMIN,
+      status: { $ne: UserStatus.DELETED },
+    });
+
+    if (adminCount > 0) {
+      if (!actor || actor.role !== UserRole.ADMIN) {
+        throw new ForbiddenException(
+          'Only existing admins can register admin or staff accounts',
+        );
+      }
+    }
+
+    const input = {
+      fullName: dto.fullName,
+      email: dto.email,
+      password: dto.password,
+      role: dto.role,
+    } satisfies CreateUserInput;
+
+    return this.createUser(input);
+  }
+
+  async login(dto: LoginDto) {
+    return this.authenticate(dto.email, dto.password);
+  }
+
+  async loginAdmin(dto: AdminLoginDto) {
+    const result = await this.authenticate(dto.email, dto.password);
+
+    if (
+      result.user.role !== UserRole.ADMIN &&
+      result.user.role !== UserRole.STAFF
+    ) {
+      throw new ForbiddenException('Admin or staff access required');
+    }
+
+    return result;
+  }
+
+  private async createUser(input: CreateUserInput) {
+    const existing = await this.userRepository.findByEmail(input.email);
     if (existing) {
       throw new ConflictException('Email already registered');
     }
 
-    const passwordHash = await argon2.hash(dto.password);
+    const passwordHash = await argon2.hash(input.password);
     const user = await this.userRepository.create({
-      fullName: dto.fullName,
-      email: dto.email.toLowerCase(),
+      fullName: input.fullName,
+      email: input.email.toLowerCase(),
       passwordHash,
-      role: UserRole.VOTER,
+      role: input.role,
       status: UserStatus.ACTIVE,
       refreshTokens: [],
     });
@@ -49,13 +114,13 @@ export class AuthService {
     );
   }
 
-  async login(dto: LoginDto) {
-    const user = await this.userRepository.findByEmail(dto.email);
+  private async authenticate(email: string, password: string) {
+    const user = await this.userRepository.findByEmail(email);
     if (!user || user.status !== UserStatus.ACTIVE) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const valid = await argon2.verify(user.passwordHash, dto.password);
+    const valid = await argon2.verify(user.passwordHash, password);
     if (!valid) {
       throw new UnauthorizedException('Invalid credentials');
     }

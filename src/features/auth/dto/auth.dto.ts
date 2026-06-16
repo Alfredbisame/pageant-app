@@ -1,5 +1,12 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsIn,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { ADMIN_ROLES, UserRole } from '@/common/constants';
 
 export class RegisterDto {
   @ApiProperty({ example: 'Jane Doe' })
@@ -52,3 +59,11 @@ export class ResetPasswordDto {
   @MinLength(8)
   password!: string;
 }
+
+export class AdminRegisterDto extends RegisterDto {
+  @ApiProperty({ enum: ADMIN_ROLES, example: UserRole.STAFF })
+  @IsIn(ADMIN_ROLES)
+  role!: UserRole;
+}
+
+export class AdminLoginDto extends LoginDto {}
