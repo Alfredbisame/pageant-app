@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Post,
   Query,
   UploadedFile,
@@ -14,6 +16,8 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
+  ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
@@ -39,6 +43,8 @@ export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 
   @Post('upload')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiCreatedResponse({ description: 'File uploaded' })
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload a single file to Cloudinary' })
   @ApiBody({
@@ -61,6 +67,8 @@ export class FilesController {
   }
 
   @Post('upload/image')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiCreatedResponse({ description: 'Image uploaded' })
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload a single image to Cloudinary' })
   @UseInterceptors(FileInterceptor('file', createImageMulterOptions()))
@@ -73,6 +81,8 @@ export class FilesController {
   }
 
   @Post('upload/multiple')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiCreatedResponse({ description: 'Files uploaded' })
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload multiple files to Cloudinary' })
   @ApiBody({
@@ -109,6 +119,8 @@ export class FilesController {
   }
 
   @Delete()
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ description: 'File deleted' })
   @ApiOperation({ summary: 'Delete a file from Cloudinary by public ID' })
   delete(@Body() dto: DeleteFileDto) {
     return this.filesService.delete(dto.publicId);
