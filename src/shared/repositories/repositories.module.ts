@@ -1,5 +1,5 @@
 import { Global, Module } from '@nestjs/common';
-import { DatabaseModule } from '../../database/database.module';
+import { DatabaseModule } from '@/database/database.module';
 import { UserRepository } from './user.repository';
 import { ContestantRepository } from './contestant.repository';
 import { VotePackageRepository } from './vote-package.repository';

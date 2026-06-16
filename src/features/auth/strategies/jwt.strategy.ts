@@ -2,9 +2,9 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { UserRepository } from '../../../shared/repositories/user.repository';
-import { JwtPayload, AuthenticatedUser } from '../../../common/types';
-import { UserStatus } from '../../../common/constants';
+import { UserRepository } from '@/shared/repositories/user.repository';
+import { JwtPayload, AuthenticatedUser } from '@/common/types';
+import { UserStatus } from '@/common/constants';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

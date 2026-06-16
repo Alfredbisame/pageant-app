@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import {
   VotePackage,
   VotePackageDocument,
-} from '../../database/schemas/vote-package.schema';
+} from '@/database/schemas/vote-package.schema';
 import { BaseRepository } from './base.repository';
 
 @Injectable()

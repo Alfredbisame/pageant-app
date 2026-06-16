@@ -4,18 +4,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ContestantRepository } from '../../shared/repositories/contestant.repository';
-import { STORAGE_SERVICE } from '../../shared/storage/storage.interface';
-import type { StorageService } from '../../shared/storage/storage.interface';
-import { slugify } from '../../common/utils/helpers';
-import { buildPaginationMeta } from '../../common/utils/pagination';
+import { ContestantRepository } from '@/shared/repositories/contestant.repository';
+import { STORAGE_SERVICE } from '@/shared/storage/storage.interface';
+import type { StorageService } from '@/shared/storage/storage.interface';
+import { slugify } from '@/common/utils/helpers';
+import { buildPaginationMeta } from '@/common/utils/pagination';
 import {
   ContestantQueryDto,
   CreateContestantDto,
   UpdateContestantDto,
 } from './dto/contestants.dto';
-import { AuthenticatedUser } from '../../common/types';
-import { AuditService } from '../audit/audit.service';
+import { AuthenticatedUser } from '@/common/types';
+import { AuditService } from '@/features/audit/audit.service';
 
 @Injectable()
 export class ContestantsService {

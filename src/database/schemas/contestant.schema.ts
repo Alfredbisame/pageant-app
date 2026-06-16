@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { ContestantLevel } from '../../common/constants';
+import { ContestantLevel } from '@/common/constants';
 
 export type ContestantDocument = HydratedDocument<Contestant>;
 

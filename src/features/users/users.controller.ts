@@ -9,15 +9,15 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { CurrentUser, Roles } from '../../common/decorators';
-import { UserRole } from '../../common/constants';
-import type { AuthenticatedUser } from '../../common/types';
+import { CurrentUser, Roles } from '@/common/decorators';
+import { UserRole } from '@/common/constants';
+import type { AuthenticatedUser } from '@/common/types';
 import {
   UpdateProfileDto,
   UpdateUserRoleDto,
   UpdateUserStatusDto,
 } from './dto/users.dto';
-import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
+import { ParseObjectIdPipe } from '@/common/pipes/parse-object-id.pipe';
 
 @ApiTags('Users')
 @ApiBearerAuth()

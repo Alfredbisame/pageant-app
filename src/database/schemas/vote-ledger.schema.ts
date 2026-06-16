@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { VoteLedgerType } from '../../common/constants';
+import { VoteLedgerType } from '@/common/constants';
 
 export type VoteLedgerDocument = HydratedDocument<VoteLedger>;
 

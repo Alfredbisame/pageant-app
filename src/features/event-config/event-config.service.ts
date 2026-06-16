@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EventConfigRepository } from '../../shared/repositories/event-config.repository';
+import { EventConfigRepository } from '@/shared/repositories/event-config.repository';
 import { UpdateEventConfigDto } from './dto/event-config.dto';
 
 @Injectable()

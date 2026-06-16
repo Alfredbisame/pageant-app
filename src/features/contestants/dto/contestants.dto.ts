@@ -7,7 +7,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ContestantLevel } from '../../../common/constants';
+import { ContestantLevel } from '@/common/constants';
 import { Type } from 'class-transformer';
 
 export class CreateContestantDto {

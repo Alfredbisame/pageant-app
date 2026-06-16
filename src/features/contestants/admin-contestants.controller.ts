@@ -21,10 +21,10 @@ import {
   CreateContestantDto,
   UpdateContestantDto,
 } from './dto/contestants.dto';
-import { CurrentUser, Roles } from '../../common/decorators';
-import { UserRole } from '../../common/constants';
-import type { AuthenticatedUser } from '../../common/types';
-import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
+import { CurrentUser, Roles } from '@/common/decorators';
+import { UserRole } from '@/common/constants';
+import type { AuthenticatedUser } from '@/common/types';
+import { ParseObjectIdPipe } from '@/common/pipes/parse-object-id.pipe';
 
 const imageFilter = (
   _req: Express.Request,

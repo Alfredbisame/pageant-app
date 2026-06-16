@@ -3,9 +3,9 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { VotingService } from './voting.service';
 import { VotingConfirmDto, VotingQuoteDto } from './dto/voting.dto';
-import { Public, CurrentUser } from '../../common/decorators';
-import { OptionalJwtAuthGuard } from '../../common/guards';
-import type { AuthenticatedUser } from '../../common/types';
+import { Public, CurrentUser } from '@/common/decorators';
+import { OptionalJwtAuthGuard } from '@/common/guards/optional-jwt-auth.guard';
+import type { AuthenticatedUser } from '@/common/types';
 
 @ApiTags('Voting')
 @Controller('voting')

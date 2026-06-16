@@ -8,8 +8,8 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { createHash, randomBytes } from 'crypto';
-import { UserRepository } from '../../shared/repositories/user.repository';
-import { UserRole, UserStatus } from '../../common/constants';
+import { UserRepository } from '@/shared/repositories/user.repository';
+import { UserRole, UserStatus } from '@/common/constants';
 import {
   ForgotPasswordDto,
   LoginDto,

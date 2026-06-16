@@ -5,9 +5,9 @@ import {
   CreateVotePackageDto,
   UpdateVotePackageDto,
 } from './dto/vote-packages.dto';
-import { Roles } from '../../common/decorators';
-import { UserRole } from '../../common/constants';
-import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
+import { Roles } from '@/common/decorators';
+import { UserRole } from '@/common/constants';
+import { ParseObjectIdPipe } from '@/common/pipes/parse-object-id.pipe';
 
 @ApiTags('Admin - Vote Packages')
 @ApiBearerAuth()

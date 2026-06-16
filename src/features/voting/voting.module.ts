@@ -1,10 +1,10 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { VotingController } from './voting.controller';
 import { VotingService, QuoteService } from './voting.service';
-import { PaymentsModule } from '../payments/payments.module';
-import { RealtimeModule } from '../../realtime/realtime.module';
-import { LeaderboardModule } from '../leaderboard/leaderboard.module';
-import { AuditModule } from '../audit/audit.module';
+import { PaymentsModule } from '@/features/payments/payments.module';
+import { RealtimeModule } from '@/realtime/realtime.module';
+import { LeaderboardModule } from '@/features/leaderboard/leaderboard.module';
+import { AuditModule } from '@/features/audit/audit.module';
 
 @Module({
   imports: [

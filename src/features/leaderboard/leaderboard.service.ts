@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ContestantRepository } from '../../shared/repositories/contestant.repository';
+import { ContestantRepository } from '@/shared/repositories/contestant.repository';
 
 @Injectable()
 export class LeaderboardService {

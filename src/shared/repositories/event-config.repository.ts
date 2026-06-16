@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import {
   EventConfig,
   EventConfigDocument,
-} from '../../database/schemas/event-config.schema';
+} from '@/database/schemas/event-config.schema';
 import { BaseRepository } from './base.repository';
 
 @Injectable()

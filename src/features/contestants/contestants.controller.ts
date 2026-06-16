@@ -2,8 +2,8 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ContestantsService } from './contestants.service';
 import { ContestantQueryDto } from './dto/contestants.dto';
-import { Public } from '../../common/decorators';
-import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
+import { Public } from '@/common/decorators';
+import { ParseObjectIdPipe } from '@/common/pipes/parse-object-id.pipe';
 
 @ApiTags('Contestants')
 @Controller('contestants')

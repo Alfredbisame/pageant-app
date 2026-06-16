@@ -2,8 +2,8 @@ import { Body, Controller, Get, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { EventConfigService } from './event-config.service';
 import { UpdateEventConfigDto } from './dto/event-config.dto';
-import { Roles } from '../../common/decorators';
-import { UserRole } from '../../common/constants';
+import { Roles } from '@/common/decorators';
+import { UserRole } from '@/common/constants';
 
 @ApiTags('Admin - Event Config')
 @ApiBearerAuth()

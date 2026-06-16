@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ContestantsController } from './contestants.controller';
 import { AdminContestantsController } from './admin-contestants.controller';
 import { ContestantsService } from './contestants.service';
-import { AuditModule } from '../audit/audit.module';
+import { AuditModule } from '@/features/audit/audit.module';
 
 @Module({
   imports: [AuditModule],

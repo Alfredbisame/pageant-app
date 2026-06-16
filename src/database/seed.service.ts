@@ -1,9 +1,9 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
-import { UserRepository } from '../shared/repositories/user.repository';
-import { EventConfigRepository } from '../shared/repositories/event-config.repository';
-import { UserRole, UserStatus } from '../common/constants';
+import { UserRepository } from '@/shared/repositories/user.repository';
+import { EventConfigRepository } from '@/shared/repositories/event-config.repository';
+import { UserRole, UserStatus } from '@/common/constants';
 
 @Injectable()
 export class SeedService implements OnModuleInit {

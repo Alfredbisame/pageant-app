@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { PaymentProvider, PaymentStatus } from '../../common/constants';
+import { PaymentProvider, PaymentStatus } from '@/common/constants';
 
 export type PaymentDocument = HydratedDocument<Payment>;
 

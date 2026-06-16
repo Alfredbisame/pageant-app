@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import {
   VoteLedger,
   VoteLedgerDocument,
-} from '../../database/schemas/vote-ledger.schema';
+} from '@/database/schemas/vote-ledger.schema';
 import { BaseRepository } from './base.repository';
 
 @Injectable()

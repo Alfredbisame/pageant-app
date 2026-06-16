@@ -7,19 +7,19 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection, Types } from 'mongoose';
-import { ContestantRepository } from '../../shared/repositories/contestant.repository';
-import { VotePackageRepository } from '../../shared/repositories/vote-package.repository';
-import { EventConfigRepository } from '../../shared/repositories/event-config.repository';
-import { PaymentRepository } from '../../shared/repositories/payment.repository';
-import { VoteLedgerRepository } from '../../shared/repositories/vote-ledger.repository';
-import { PaymentVerificationService } from '../payments/payment-verification.service';
-import { RealtimeGateway } from '../../realtime/realtime.gateway';
-import { LeaderboardService } from '../leaderboard/leaderboard.service';
-import { AuditService } from '../audit/audit.service';
+import { ContestantRepository } from '@/shared/repositories/contestant.repository';
+import { VotePackageRepository } from '@/shared/repositories/vote-package.repository';
+import { EventConfigRepository } from '@/shared/repositories/event-config.repository';
+import { PaymentRepository } from '@/shared/repositories/payment.repository';
+import { VoteLedgerRepository } from '@/shared/repositories/vote-ledger.repository';
+import { PaymentVerificationService } from '@/features/payments/payment-verification.service';
+import { RealtimeGateway } from '@/realtime/realtime.gateway';
+import { LeaderboardService } from '@/features/leaderboard/leaderboard.service';
+import { AuditService } from '@/features/audit/audit.service';
 import { VotingConfirmDto, VotingQuoteDto } from './dto/voting.dto';
-import { PaymentStatus, VoteLedgerType } from '../../common/constants';
-import { generateReference } from '../../common/utils/helpers';
-import { AuthenticatedUser } from '../../common/types';
+import { PaymentStatus, VoteLedgerType } from '@/common/constants';
+import { generateReference } from '@/common/utils/helpers';
+import { AuthenticatedUser } from '@/common/types';
 
 export interface QuoteResult {
   baseAmount: number;

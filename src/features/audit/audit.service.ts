@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AuditLogRepository } from '../../shared/repositories/audit-log.repository';
+import { AuditLogRepository } from '@/shared/repositories/audit-log.repository';
 
 export interface AuditLogInput {
   actorId?: string;

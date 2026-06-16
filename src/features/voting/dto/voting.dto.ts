@@ -12,7 +12,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PaymentProvider } from '../../../common/constants';
+import { PaymentProvider } from '@/common/constants';
 import { Type } from 'class-transformer';
 
 export class VotingQuoteDto {

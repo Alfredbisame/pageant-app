@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { VotePackagesService } from './vote-packages.service';
-import { Public } from '../../common/decorators';
+import { Public } from '@/common/decorators';
 
 @ApiTags('Vote Packages')
 @Controller('vote-packages')

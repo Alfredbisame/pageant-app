@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { LeaderboardService } from './leaderboard.service';
-import { Public } from '../../common/decorators';
+import { Public } from '@/common/decorators';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Min } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';

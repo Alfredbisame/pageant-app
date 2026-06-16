@@ -22,8 +22,12 @@ export function setupSwagger(app: INestApplication, apiPrefix: string) {
   SwaggerModule.setup(`${apiPrefix}/docs`, app, document, {
     swaggerOptions: {
       persistAuthorization: true,
+      docExpansion: 'list',
+      filter: true,
+      showRequestDuration: true,
       tagsSorter: 'alpha',
       operationsSorter: 'alpha',
+      requestSnippetsEnabled: true,
     },
   });
 }

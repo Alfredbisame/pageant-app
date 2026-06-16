@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { PaymentProvider } from '../../common/constants';
+import { PaymentProvider } from '@/common/constants';
 
 export interface ProviderVerificationResult {
   success: boolean;

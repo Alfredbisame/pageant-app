@@ -4,10 +4,10 @@ import { Model } from 'mongoose';
 import {
   Contestant,
   ContestantDocument,
-} from '../../database/schemas/contestant.schema';
+} from '@/database/schemas/contestant.schema';
 import { BaseRepository } from './base.repository';
-import { getPagination } from '../../common/utils/pagination';
-import { ContestantLevel } from '../../common/constants';
+import { getPagination } from '@/common/utils/pagination';
+import { ContestantLevel } from '@/common/constants';
 
 export interface ContestantListQuery {
   search?: string;

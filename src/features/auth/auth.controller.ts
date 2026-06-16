@@ -8,9 +8,9 @@ import {
   RegisterDto,
   ResetPasswordDto,
 } from './dto/auth.dto';
-import { Public } from '../../common/decorators';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import type { AuthenticatedUser } from '../../common/types';
+import { Public } from '@/common/decorators';
+import { CurrentUser } from '@/common/decorators';
+import type { AuthenticatedUser } from '@/common/types';
 
 @ApiTags('Auth')
 @Controller('auth')

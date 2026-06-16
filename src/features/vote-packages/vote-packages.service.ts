@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { VotePackageRepository } from '../../shared/repositories/vote-package.repository';
+import { VotePackageRepository } from '@/shared/repositories/vote-package.repository';
 import {
   CreateVotePackageDto,
   UpdateVotePackageDto,

@@ -5,7 +5,7 @@ import {
   MongooseHealthIndicator,
 } from '@nestjs/terminus';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Public } from '../../common/decorators';
+import { Public } from '@/common/decorators';
 
 @ApiTags('Health')
 @Controller('health')

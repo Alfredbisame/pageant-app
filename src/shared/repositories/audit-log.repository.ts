@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import {
   AuditLog,
   AuditLogDocument,
-} from '../../database/schemas/audit-log.schema';
+} from '@/database/schemas/audit-log.schema';
 import { BaseRepository } from './base.repository';
 
 @Injectable()
