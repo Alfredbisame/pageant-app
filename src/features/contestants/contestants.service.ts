@@ -55,11 +55,11 @@ export class ContestantsService {
       throw new ConflictException('Entry number or slug already exists');
     }
 
-    const avatarUrl = await this.storage.upload(file);
+    const uploaded = await this.storage.upload(file, 'contestants');
     const contestant = await this.contestantRepository.create({
       ...dto,
       slug,
-      avatarUrl,
+      avatarUrl: uploaded.secureUrl,
       voteCount: 0,
       isActive: true,
       createdBy: user.id,
@@ -96,9 +96,9 @@ export class ContestantsService {
     file: Express.Multer.File,
     user: AuthenticatedUser,
   ) {
-    const avatarUrl = await this.storage.upload(file);
+    const uploaded = await this.storage.upload(file, 'contestants');
     const contestant = await this.contestantRepository.updateById(id, {
-      avatarUrl,
+      avatarUrl: uploaded.secureUrl,
     });
     if (!contestant) throw new NotFoundException('Contestant not found');
 
@@ -107,7 +107,7 @@ export class ContestantsService {
       action: 'contestant.avatar_updated',
       entity: 'contestant',
       entityId: id,
-      summary: { avatarUrl },
+      summary: { avatarUrl: uploaded.secureUrl },
     });
 
     return this.toPublic(contestant);

@@ -3,11 +3,13 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CurrentUser, Roles } from '@/common/decorators';
 import { UserRole } from '@/common/constants';
@@ -32,6 +34,8 @@ export class UsersController {
   }
 
   @Patch('me')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ description: 'Profile updated' })
   @ApiOperation({ summary: 'Update current user profile' })
   updateMe(
     @CurrentUser() user: AuthenticatedUser,
@@ -41,6 +45,8 @@ export class UsersController {
   }
 
   @Delete('me')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ description: 'Account soft-deleted' })
   @ApiOperation({ summary: 'Soft delete current user account' })
   deleteMe(@CurrentUser() user: AuthenticatedUser) {
     return this.usersService.softDelete(user.id);
@@ -61,6 +67,8 @@ export class AdminUsersController {
   }
 
   @Patch(':id/role')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ description: 'User role updated' })
   @ApiOperation({ summary: 'Update user role (admin)' })
   updateRole(
     @Param('id', ParseObjectIdPipe) id: string,
@@ -70,6 +78,8 @@ export class AdminUsersController {
   }
 
   @Patch(':id/status')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ description: 'User status updated' })
   @ApiOperation({ summary: 'Update user status (admin)' })
   updateStatus(
     @Param('id', ParseObjectIdPipe) id: string,

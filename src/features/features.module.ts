@@ -9,6 +9,7 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { EventConfigModule } from './event-config/event-config.module';
 import { AuditModule } from './audit/audit.module';
 import { HealthModule } from './health/health.module';
+import { FilesModule } from './files/files.module';
 
 const featureModules = [
   AuthModule,
@@ -21,6 +22,7 @@ const featureModules = [
   EventConfigModule,
   AuditModule,
   HealthModule,
+  FilesModule,
 ];
 
 @Module({})

@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { VotingService } from './voting.service';
 import { VotingConfirmDto, VotingQuoteDto } from './dto/voting.dto';
@@ -14,6 +14,8 @@ export class VotingController {
 
   @Public()
   @Post('quote')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ description: 'Vote quote calculated' })
   @ApiOperation({ summary: 'Get server-validated vote quote with fees' })
   quote(@Body() dto: VotingQuoteDto) {
     return this.votingService.quote(dto);
@@ -23,6 +25,8 @@ export class VotingController {
   @UseGuards(OptionalJwtAuthGuard)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('confirm')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ description: 'Payment verified and votes credited' })
   @ApiOperation({ summary: 'Verify payment and credit votes' })
   confirm(
     @Body() dto: VotingConfirmDto,

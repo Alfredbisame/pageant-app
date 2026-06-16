@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { mkdirSync, existsSync } from 'fs';
 import { join, extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { StorageService } from './storage.interface';
+import { StorageService, UploadResult } from './storage.interface';
 
 @Injectable()
 export class LocalStorageService implements StorageService {
@@ -22,7 +22,7 @@ export class LocalStorageService implements StorageService {
   async upload(
     file: Express.Multer.File,
     folder = 'contestants',
-  ): Promise<string> {
+  ): Promise<UploadResult> {
     const targetDir = join(this.uploadDir, folder);
     if (!existsSync(targetDir)) {
       mkdirSync(targetDir, { recursive: true });
@@ -33,6 +33,20 @@ export class LocalStorageService implements StorageService {
     const { writeFile } = await import('fs/promises');
     await writeFile(filepath, file.buffer);
 
-    return `/uploads/${folder}/${filename}`;
+    const url = `/uploads/${folder}/${filename}`;
+
+    return {
+      url,
+      secureUrl: url,
+      publicId: `${folder}/${filename}`,
+    };
+  }
+
+  async delete(publicIdOrUrl: string): Promise<void> {
+    const { unlink } = await import('fs/promises');
+    const { join } = await import('path');
+    const relativePath = publicIdOrUrl.replace(/^\/uploads\//, '');
+    const filepath = join(this.uploadDir, relativePath);
+    await unlink(filepath);
   }
 }

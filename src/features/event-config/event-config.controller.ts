@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Patch } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpCode, HttpStatus, Patch } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { EventConfigService } from './event-config.service';
 import { UpdateEventConfigDto } from './dto/event-config.dto';
 import { Roles } from '@/common/decorators';
@@ -19,6 +19,8 @@ export class EventConfigController {
   }
 
   @Patch()
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ description: 'Event configuration updated' })
   @ApiOperation({ summary: 'Update event configuration' })
   update(@Body() dto: UpdateEventConfigDto) {
     return this.eventConfigService.update(dto);

@@ -19,10 +19,11 @@ export default () => ({
     limit: parseInt(process.env.THROTTLE_LIMIT ?? '100', 10),
   },
   storage: {
-    driver: process.env.STORAGE_DRIVER ?? 'local',
+    driver: process.env.STORAGE_DRIVER ?? 'cloudinary',
     uploadDir: process.env.UPLOAD_DIR ?? 'uploads',
     maxFileSizeMb: parseInt(process.env.MAX_FILE_SIZE_MB ?? '5', 10),
     cloudinaryUrl: process.env.CLOUDINARY_URL,
+    cloudinaryFolder: process.env.CLOUDINARY_FOLDER ?? 'ell-pageant',
   },
   payments: {
     paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
