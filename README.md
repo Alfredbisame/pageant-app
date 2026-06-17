@@ -52,8 +52,16 @@ src/
 | Vote Packages | GET `/vote-packages` | `/admin/vote-packages` |
 | Voting | quote, confirm, transaction status | — |
 | Leaderboard | rankings, top, summary | — |
-| Event Config | — | `/admin/event-config` |
+| Event | `GET /event/public` | `/admin/event-config` |
 | Health | `/health` | — |
+
+## Frontend Integration
+
+The voter-facing UI is a **separate Next.js 16 app** (not in this repo). See the full integration guide:
+
+**[docs/FRONTEND_API_INTEGRATION.md](docs/FRONTEND_API_INTEGRATION.md)**
+
+Covers server actions, domain services, Pino logging, all voter-facing endpoints, payment flow (Paystack/Hubtel), Socket.IO realtime, and page-by-page integration for Home, Contestants, Leaderboard, Voting, and About.
 
 ## Environment Variables
 

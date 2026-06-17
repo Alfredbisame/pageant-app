@@ -29,7 +29,13 @@ export class EventConfigRepository extends BaseRepository<EventConfigDocument> {
         0.025,
       );
 
+      const eventName = this.configService.get<string>(
+        'event.defaults.eventName',
+        'ELL Pageant 10th Anniversary',
+      );
+
       config = await this.model.create({
+        eventName,
         votingEnabled,
         platformFeeRate,
       });

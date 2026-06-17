@@ -5,6 +5,9 @@ export type EventConfigDocument = HydratedDocument<EventConfig>;
 
 @Schema({ timestamps: true, collection: 'event_config' })
 export class EventConfig {
+  @Prop({ default: 'ELL Pageant 10th Anniversary' })
+  eventName!: string;
+
   @Prop({ default: false })
   votingEnabled!: boolean;
 
