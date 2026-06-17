@@ -1,7 +1,7 @@
 uploads/
-dist/
 node_modules/
 .env
 .env.local
 coverage/
 *.log
+docs/FRONTEND_API_INTEGRATION.md
