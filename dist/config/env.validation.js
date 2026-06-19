@@ -72,10 +72,16 @@ exports.envValidationSchema = Joi.object({
     MAX_FILE_SIZE_MB: Joi.number().default(5),
     CLOUDINARY_URL: Joi.when('STORAGE_DRIVER', {
         is: 'cloudinary',
-        then: Joi.string().required(),
+        then: Joi.string().optional().allow(''),
         otherwise: Joi.string().optional().allow(''),
     }),
+    CLOUDINARY_CLOUD_NAME: Joi.string().optional().allow(''),
+    CLOUDINARY_API_KEY: Joi.string().optional().allow(''),
+    CLOUDINARY_API_SECRET: Joi.string().optional().allow(''),
     CLOUDINARY_FOLDER: Joi.string().default('ell-pageant'),
+    CLOUDINARY_FOLDER_MODE: Joi.string()
+        .valid('dynamic', 'fixed')
+        .default('dynamic'),
     PAYSTACK_SECRET_KEY: Joi.string().optional().allow(''),
     HUBTEL_CLIENT_ID: Joi.string().optional().allow(''),
     HUBTEL_CLIENT_SECRET: Joi.string().optional().allow(''),
@@ -83,5 +89,19 @@ exports.envValidationSchema = Joi.object({
     SEED_ADMIN_EMAIL: Joi.string().email().optional(),
     SEED_ADMIN_PASSWORD: Joi.string().optional(),
     SEED_ADMIN_NAME: Joi.string().default('System Admin'),
+}).custom((env, helpers) => {
+    if (env.STORAGE_DRIVER !== 'cloudinary') {
+        return env;
+    }
+    const hasUrl = Boolean(env.CLOUDINARY_URL);
+    const hasParts = Boolean(env.CLOUDINARY_CLOUD_NAME) &&
+        Boolean(env.CLOUDINARY_API_KEY) &&
+        Boolean(env.CLOUDINARY_API_SECRET);
+    if (!hasUrl && !hasParts) {
+        return helpers.error('any.custom', {
+            message: 'Cloudinary storage requires CLOUDINARY_URL or CLOUDINARY_CLOUD_NAME + CLOUDINARY_API_KEY + CLOUDINARY_API_SECRET',
+        });
+    }
+    return env;
 });
 //# sourceMappingURL=env.validation.js.map

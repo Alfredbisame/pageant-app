@@ -6,8 +6,12 @@ export declare class CloudinaryStorageService implements StorageService {
     private readonly logger;
     private readonly credentials;
     private readonly defaultFolder;
+    private readonly folderMode;
     constructor(configService: ConfigService, logger: LoggerService);
     upload(file: Express.Multer.File, folder?: string): Promise<UploadResult>;
     delete(publicIdOrUrl: string): Promise<void>;
     getSignedUploadParams(folder?: string): Promise<SignedUploadParams>;
+    private resolveTargetFolder;
+    private buildFolderUploadParams;
+    private mapUploadError;
 }

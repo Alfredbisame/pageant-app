@@ -1,15 +1,13 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { LoggerService } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import {
   CloudinaryCredentials,
+  CloudinaryFolderMode,
   extractPublicId,
-  parseCloudinaryUrl,
+  resolveAssetFolder,
+  resolveCloudinaryCredentials,
   signCloudinaryParams,
 } from './cloudinary.config';
 import {
@@ -32,19 +30,29 @@ interface CloudinaryUploadResponse {
 export class CloudinaryStorageService implements StorageService {
   private readonly credentials: CloudinaryCredentials;
   private readonly defaultFolder: string;
+  private readonly folderMode: CloudinaryFolderMode;
 
   constructor(
     private readonly configService: ConfigService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
   ) {
-    const cloudinaryUrl = this.configService.getOrThrow<string>(
+    const cloudinaryUrl = this.configService.get<string>(
       'storage.cloudinaryUrl',
     );
-    this.credentials = parseCloudinaryUrl(cloudinaryUrl);
+    this.credentials = resolveCloudinaryCredentials({
+      cloudinaryUrl,
+      cloudName: this.configService.get<string>('storage.cloudinaryCloudName'),
+      apiKey: this.configService.get<string>('storage.cloudinaryApiKey'),
+      apiSecret: this.configService.get<string>('storage.cloudinaryApiSecret'),
+    });
     this.defaultFolder = this.configService.get<string>(
       'storage.cloudinaryFolder',
       'ell-pageant',
+    );
+    this.folderMode = this.configService.get<CloudinaryFolderMode>(
+      'storage.cloudinaryFolderMode',
+      'dynamic',
     );
   }
 
@@ -56,13 +64,9 @@ export class CloudinaryStorageService implements StorageService {
       throw new BadRequestException('file is required');
     }
 
-    const timestamp = Math.floor(Date.now() / 1000);
-    const params: Record<string, string | number> = {
-      folder,
-      timestamp,
-    };
+    const { signedParams, formFields } = this.buildFolderUploadParams(folder);
     const signature = signCloudinaryParams(
-      params,
+      signedParams,
       this.credentials.apiSecret,
     );
 
@@ -73,9 +77,10 @@ export class CloudinaryStorageService implements StorageService {
       file.originalname,
     );
     form.append('api_key', this.credentials.apiKey);
-    form.append('timestamp', String(timestamp));
     form.append('signature', signature);
-    form.append('folder', folder);
+    for (const [key, value] of Object.entries(formFields)) {
+      form.append(key, value);
+    }
 
     const uploadUrl = `https://api.cloudinary.com/v1_1/${this.credentials.cloudName}/auto/upload`;
     const response = await fetch(uploadUrl, { method: 'POST', body: form });
@@ -84,10 +89,9 @@ export class CloudinaryStorageService implements StorageService {
     };
 
     if (!response.ok) {
-      this.logger.error(
-        `Cloudinary upload failed: ${body.error?.message ?? response.statusText}`,
-      );
-      throw new BadRequestException('File upload failed');
+      const cloudinaryMessage = body.error?.message ?? response.statusText;
+      this.logger.error(`Cloudinary upload failed: ${cloudinaryMessage}`);
+      throw new BadRequestException(this.mapUploadError(cloudinaryMessage));
     }
 
     this.logger.log(`Uploaded file to Cloudinary: ${body.public_id}`);
@@ -110,10 +114,7 @@ export class CloudinaryStorageService implements StorageService {
       public_id: publicId,
       timestamp,
     };
-    const signature = signCloudinaryParams(
-      params,
-      this.credentials.apiSecret,
-    );
+    const signature = signCloudinaryParams(params, this.credentials.apiSecret);
 
     const form = new FormData();
     form.append('public_id', publicId);
@@ -123,7 +124,10 @@ export class CloudinaryStorageService implements StorageService {
 
     const destroyUrl = `https://api.cloudinary.com/v1_1/${this.credentials.cloudName}/image/destroy`;
     const response = await fetch(destroyUrl, { method: 'POST', body: form });
-    const body = (await response.json()) as { result?: string; error?: { message?: string } };
+    const body = (await response.json()) as {
+      result?: string;
+      error?: { message?: string };
+    };
 
     if (!response.ok || body.result !== 'ok') {
       this.logger.error(
@@ -138,23 +142,77 @@ export class CloudinaryStorageService implements StorageService {
   async getSignedUploadParams(
     folder = this.defaultFolder,
   ): Promise<SignedUploadParams> {
-    const timestamp = Math.floor(Date.now() / 1000);
-    const params: Record<string, string | number> = {
-      folder,
-      timestamp,
-    };
+    const { signedParams } = this.buildFolderUploadParams(folder);
     const signature = signCloudinaryParams(
-      params,
+      signedParams,
       this.credentials.apiSecret,
     );
 
     return {
       signature,
-      timestamp,
+      timestamp: signedParams.timestamp as number,
       apiKey: this.credentials.apiKey,
       cloudName: this.credentials.cloudName,
-      folder,
+      folder: this.resolveTargetFolder(folder),
       uploadUrl: `https://api.cloudinary.com/v1_1/${this.credentials.cloudName}/auto/upload`,
     };
+  }
+
+  private resolveTargetFolder(folder?: string): string {
+    if (this.folderMode === 'dynamic') {
+      return resolveAssetFolder(this.defaultFolder, folder);
+    }
+
+    return folder ?? this.defaultFolder;
+  }
+
+  private buildFolderUploadParams(folder?: string): {
+    signedParams: Record<string, string | number>;
+    formFields: Record<string, string>;
+  } {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const targetFolder = this.resolveTargetFolder(folder);
+
+    if (this.folderMode === 'dynamic') {
+      const signedParams: Record<string, string | number> = {
+        asset_folder: targetFolder,
+        timestamp,
+        use_asset_folder_as_public_id_prefix: 'true',
+      };
+
+      return {
+        signedParams,
+        formFields: {
+          asset_folder: targetFolder,
+          timestamp: String(timestamp),
+          use_asset_folder_as_public_id_prefix: 'true',
+        },
+      };
+    }
+
+    const signedParams: Record<string, string | number> = {
+      folder: targetFolder,
+      timestamp,
+    };
+
+    return {
+      signedParams,
+      formFields: {
+        folder: targetFolder,
+        timestamp: String(timestamp),
+      },
+    };
+  }
+
+  private mapUploadError(message: string): string {
+    if (message.includes('Invalid Signature')) {
+      return 'Cloudinary credentials are invalid. Check CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.';
+    }
+
+    if (message.includes('Invalid api_key')) {
+      return 'Cloudinary API key is invalid. Check CLOUDINARY_API_KEY in your environment.';
+    }
+
+    return `File upload failed: ${message}`;
   }
 }

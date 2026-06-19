@@ -21,7 +21,11 @@ declare const _default: () => {
         uploadDir: string;
         maxFileSizeMb: number;
         cloudinaryUrl: string | undefined;
+        cloudinaryCloudName: string | undefined;
+        cloudinaryApiKey: string | undefined;
+        cloudinaryApiSecret: string | undefined;
         cloudinaryFolder: string;
+        cloudinaryFolderMode: string;
     };
     payments: {
         paystackSecretKey: string | undefined;

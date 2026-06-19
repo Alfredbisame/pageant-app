@@ -24,7 +24,11 @@ exports.default = () => ({
         uploadDir: process.env.UPLOAD_DIR ?? 'uploads',
         maxFileSizeMb: parseInt(process.env.MAX_FILE_SIZE_MB ?? '5', 10),
         cloudinaryUrl: process.env.CLOUDINARY_URL,
+        cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
+        cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
+        cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
         cloudinaryFolder: process.env.CLOUDINARY_FOLDER ?? 'ell-pageant',
+        cloudinaryFolderMode: process.env.CLOUDINARY_FOLDER_MODE === 'fixed' ? 'fixed' : 'dynamic',
     },
     payments: {
         paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,

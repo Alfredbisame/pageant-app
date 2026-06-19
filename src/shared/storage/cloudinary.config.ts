@@ -15,11 +15,51 @@ export function parseCloudinaryUrl(url: string): CloudinaryCredentials {
   }
 
   return {
-    apiKey: match[1],
-    apiSecret: match[2],
+    apiKey: decodeURIComponent(match[1]),
+    apiSecret: decodeURIComponent(match[2]),
     cloudName: match[3],
   };
 }
+
+export function resolveCloudinaryCredentials(input: {
+  cloudinaryUrl?: string;
+  cloudName?: string;
+  apiKey?: string;
+  apiSecret?: string;
+}): CloudinaryCredentials {
+  if (input.cloudinaryUrl) {
+    return parseCloudinaryUrl(input.cloudinaryUrl);
+  }
+
+  if (input.cloudName && input.apiKey && input.apiSecret) {
+    return {
+      cloudName: input.cloudName,
+      apiKey: input.apiKey,
+      apiSecret: input.apiSecret,
+    };
+  }
+
+  throw new Error(
+    'Cloudinary credentials missing. Set CLOUDINARY_URL or CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.',
+  );
+}
+
+export function resolveAssetFolder(
+  rootFolder: string,
+  subfolder?: string,
+): string {
+  if (!subfolder || subfolder === rootFolder) {
+    return rootFolder;
+  }
+
+  if (subfolder.startsWith(`${rootFolder}/`)) {
+    return subfolder;
+  }
+
+  return `${rootFolder}/${subfolder}`;
+}
+
+export type CloudinaryFolderMode = 'dynamic' | 'fixed';
 
 export function signCloudinaryParams(
   params: Record<string, string | number>,
@@ -30,7 +70,9 @@ export function signCloudinaryParams(
     .map((key) => `${key}=${params[key]}`)
     .join('&');
 
-  return createHash('sha1').update(payload + apiSecret).digest('hex');
+  return createHash('sha1')
+    .update(payload + apiSecret)
+    .digest('hex');
 }
 
 export function extractPublicId(publicIdOrUrl: string): string {
