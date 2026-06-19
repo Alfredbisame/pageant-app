@@ -1,4 +1,7 @@
-import { BadRequestException, UnsupportedMediaTypeException } from '@nestjs/common';
+import {
+  BadRequestException,
+  UnsupportedMediaTypeException,
+} from '@nestjs/common';
 import { memoryStorage } from 'multer';
 
 const maxFileSizeMb = parseInt(process.env.MAX_FILE_SIZE_MB ?? '5', 10);

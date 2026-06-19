@@ -28,7 +28,7 @@ let PaystackService = class PaystackService {
         this.configService = configService;
     }
     supports(provider) {
-        return provider === constants_1.PaymentProvider.PAYSTACK || provider === constants_1.PaymentProvider.USSD;
+        return (provider === constants_1.PaymentProvider.PAYSTACK || provider === constants_1.PaymentProvider.USSD);
     }
     async verify(reference) {
         const secretKey = this.configService.get('payments.paystackSecretKey');

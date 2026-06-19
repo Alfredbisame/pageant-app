@@ -19,6 +19,8 @@ class CreateContestantDto {
     entryNumber;
     level;
     bio;
+    imageUrl;
+    avatarUrl;
     image;
 }
 exports.CreateContestantDto = CreateContestantDto;
@@ -47,7 +49,22 @@ __decorate([
     __metadata("design:type", String)
 ], CreateContestantDto.prototype, "bio", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({
+    (0, swagger_1.ApiPropertyOptional)({
+        example: 'https://res.cloudinary.com/dkhabvwv1/image/upload/v123/ell-pageant/contestants/photo.jpg',
+        description: 'Pre-uploaded profile image URL (avatar). Accepted as imageUrl or avatarUrl; stored and returned as avatarUrl.',
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value, obj }) => normalizeImageUrl(value ?? obj?.avatarUrl ?? obj?.imageUrl)),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsUrl)({ require_protocol: true }),
+    __metadata("design:type", String)
+], CreateContestantDto.prototype, "imageUrl", void 0);
+__decorate([
+    (0, class_validator_1.Allow)(),
+    __metadata("design:type", Object)
+], CreateContestantDto.prototype, "avatarUrl", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
         type: 'string',
         format: 'binary',
         description: 'Contestant profile image (JPEG, PNG, WebP, or GIF)',
@@ -131,4 +148,14 @@ __decorate([
     (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)
 ], ContestantQueryDto.prototype, "limit", void 0);
+function normalizeImageUrl(value) {
+    if (typeof value === 'string') {
+        return value;
+    }
+    if (value && typeof value === 'object') {
+        const record = value;
+        return (record.secureUrl ?? record.url ?? record.imageUrl ?? record.avatarUrl);
+    }
+    return value;
+}
 //# sourceMappingURL=contestants.dto.js.map

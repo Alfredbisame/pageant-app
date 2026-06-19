@@ -13,4 +13,3 @@ export interface PaymentVerifier {
 }
 
 export const PAYMENT_VERIFIERS = Symbol('PAYMENT_VERIFIERS');
-

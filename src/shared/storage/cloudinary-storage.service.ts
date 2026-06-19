@@ -139,7 +139,7 @@ export class CloudinaryStorageService implements StorageService {
     this.logger.log(`Deleted Cloudinary asset: ${publicId}`);
   }
 
-  async getSignedUploadParams(
+  getSignedUploadParams(
     folder = this.defaultFolder,
   ): Promise<SignedUploadParams> {
     const { signedParams } = this.buildFolderUploadParams(folder);
@@ -148,14 +148,14 @@ export class CloudinaryStorageService implements StorageService {
       this.credentials.apiSecret,
     );
 
-    return {
+    return Promise.resolve({
       signature,
       timestamp: signedParams.timestamp as number,
       apiKey: this.credentials.apiKey,
       cloudName: this.credentials.cloudName,
       folder: this.resolveTargetFolder(folder),
       uploadUrl: `https://api.cloudinary.com/v1_1/${this.credentials.cloudName}/auto/upload`,
-    };
+    });
   }
 
   private resolveTargetFolder(folder?: string): string {

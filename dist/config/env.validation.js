@@ -67,7 +67,9 @@ exports.envValidationSchema = Joi.object({
     }),
     THROTTLE_TTL: Joi.number().default(60000),
     THROTTLE_LIMIT: Joi.number().default(100),
-    STORAGE_DRIVER: Joi.string().valid('local', 'cloudinary').default('cloudinary'),
+    STORAGE_DRIVER: Joi.string()
+        .valid('local', 'cloudinary')
+        .default('cloudinary'),
     UPLOAD_DIR: Joi.string().default('uploads'),
     MAX_FILE_SIZE_MB: Joi.number().default(5),
     CLOUDINARY_URL: Joi.when('STORAGE_DRIVER', {

@@ -50,11 +50,14 @@ let ContestantsService = class ContestantsService {
         if (existing) {
             throw new common_1.ConflictException('Entry number or slug already exists');
         }
-        const uploaded = await this.storage.upload(file, 'contestants');
+        const avatarUrl = await this.resolveAvatarUrl(dto, file);
         const contestant = await this.contestantRepository.create({
-            ...dto,
+            displayName: dto.displayName,
+            entryNumber: dto.entryNumber,
+            level: dto.level,
+            bio: dto.bio,
             slug,
-            avatarUrl: uploaded.secureUrl,
+            avatarUrl,
             voteCount: 0,
             isActive: true,
             createdBy: user.id,
@@ -111,6 +114,17 @@ let ContestantsService = class ContestantsService {
             summary: {},
         });
         return { success: true };
+    }
+    async resolveAvatarUrl(dto, file) {
+        if (file?.buffer?.length) {
+            const uploaded = await this.storage.upload(file, 'contestants');
+            return uploaded.secureUrl;
+        }
+        const imageUrl = dto.imageUrl;
+        if (imageUrl) {
+            return imageUrl;
+        }
+        throw new common_1.BadRequestException('An image file or imageUrl (avatar URL) is required');
     }
     toPublic(contestant) {
         return {

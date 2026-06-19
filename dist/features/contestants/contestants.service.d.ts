@@ -40,7 +40,7 @@ export declare class ContestantsService {
         votes: number;
         slug: string;
     }>;
-    create(dto: CreateContestantDto, file: Express.Multer.File, user: AuthenticatedUser): Promise<{
+    create(dto: CreateContestantDto, file: Express.Multer.File | undefined, user: AuthenticatedUser): Promise<{
         id: string;
         name: string;
         displayName: string;
@@ -79,5 +79,6 @@ export declare class ContestantsService {
     softDelete(id: string, user: AuthenticatedUser): Promise<{
         success: boolean;
     }>;
+    private resolveAvatarUrl;
     private toPublic;
 }

@@ -38,8 +38,7 @@ export default () => ({
   },
   event: {
     defaults: {
-      eventName:
-        process.env.EVENT_NAME ?? 'ELL Pageant 10th Anniversary',
+      eventName: process.env.EVENT_NAME ?? 'ELL Pageant 10th Anniversary',
       votingEnabled: false,
       platformFeeRate: 0.025,
     },

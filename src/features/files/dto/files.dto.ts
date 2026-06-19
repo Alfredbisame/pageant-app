@@ -23,7 +23,8 @@ export class UploadImageBodyDto {
   @ApiProperty({
     type: 'string',
     format: 'binary',
-    description: 'Image file (JPEG, PNG, WebP, or GIF). Field name: file or image',
+    description:
+      'Image file (JPEG, PNG, WebP, or GIF). Field name: file or image',
   })
   @Allow()
   file?: unknown;

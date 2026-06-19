@@ -90,17 +90,17 @@ let CloudinaryStorageService = class CloudinaryStorageService {
         }
         this.logger.log(`Deleted Cloudinary asset: ${publicId}`);
     }
-    async getSignedUploadParams(folder = this.defaultFolder) {
+    getSignedUploadParams(folder = this.defaultFolder) {
         const { signedParams } = this.buildFolderUploadParams(folder);
         const signature = (0, cloudinary_config_1.signCloudinaryParams)(signedParams, this.credentials.apiSecret);
-        return {
+        return Promise.resolve({
             signature,
             timestamp: signedParams.timestamp,
             apiKey: this.credentials.apiKey,
             cloudName: this.credentials.cloudName,
             folder: this.resolveTargetFolder(folder),
             uploadUrl: `https://api.cloudinary.com/v1_1/${this.credentials.cloudName}/auto/upload`,
-        };
+        });
     }
     resolveTargetFolder(folder) {
         if (this.folderMode === 'dynamic') {

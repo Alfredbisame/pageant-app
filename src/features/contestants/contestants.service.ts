@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -43,7 +44,7 @@ export class ContestantsService {
 
   async create(
     dto: CreateContestantDto,
-    file: Express.Multer.File,
+    file: Express.Multer.File | undefined,
     user: AuthenticatedUser,
   ) {
     const slug = slugify(`${dto.displayName}-${dto.entryNumber}`);
@@ -55,11 +56,14 @@ export class ContestantsService {
       throw new ConflictException('Entry number or slug already exists');
     }
 
-    const uploaded = await this.storage.upload(file, 'contestants');
+    const avatarUrl = await this.resolveAvatarUrl(dto, file);
     const contestant = await this.contestantRepository.create({
-      ...dto,
+      displayName: dto.displayName,
+      entryNumber: dto.entryNumber,
+      level: dto.level,
+      bio: dto.bio,
       slug,
-      avatarUrl: uploaded.secureUrl,
+      avatarUrl,
       voteCount: 0,
       isActive: true,
       createdBy: user.id,
@@ -128,6 +132,25 @@ export class ContestantsService {
     });
 
     return { success: true };
+  }
+
+  private async resolveAvatarUrl(
+    dto: CreateContestantDto,
+    file?: Express.Multer.File,
+  ): Promise<string> {
+    if (file?.buffer?.length) {
+      const uploaded = await this.storage.upload(file, 'contestants');
+      return uploaded.secureUrl;
+    }
+
+    const imageUrl = dto.imageUrl;
+    if (imageUrl) {
+      return imageUrl;
+    }
+
+    throw new BadRequestException(
+      'An image file or imageUrl (avatar URL) is required',
+    );
   }
 
   private toPublic(contestant: {

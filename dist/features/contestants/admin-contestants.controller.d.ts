@@ -4,7 +4,7 @@ import type { AuthenticatedUser } from "../../common/types";
 export declare class AdminContestantsController {
     private readonly contestantsService;
     constructor(contestantsService: ContestantsService);
-    create(dto: CreateContestantDto, file: Express.Multer.File, user: AuthenticatedUser): Promise<{
+    create(dto: CreateContestantDto, file: Express.Multer.File | undefined, user: AuthenticatedUser): Promise<{
         id: string;
         name: string;
         displayName: string;

@@ -45,16 +45,18 @@ export class AdminContestantsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiCreatedResponse({ description: 'Contestant created' })
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Create contestant with avatar upload' })
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @ApiOperation({
+    summary:
+      'Create contestant with image file upload or pre-uploaded imageUrl',
+  })
   @ApiBody({ type: CreateContestantDto })
   @UseInterceptors(FileInterceptor('image', createImageMulterOptions()))
   create(
     @Body() dto: CreateContestantDto,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File | undefined,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    assertUploadedFile(file, 'image');
     return this.contestantsService.create(dto, file, user);
   }
 

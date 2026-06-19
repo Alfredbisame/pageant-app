@@ -4,12 +4,13 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUrl,
   Min,
   MinLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ContestantLevel } from '@/common/constants';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class CreateContestantDto {
   @ApiProperty({ example: 'Ama Serwaa' })
@@ -32,7 +33,25 @@ export class CreateContestantDto {
   @IsString()
   bio?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
+    example:
+      'https://res.cloudinary.com/dkhabvwv1/image/upload/v123/ell-pageant/contestants/photo.jpg',
+    description:
+      'Pre-uploaded profile image URL (avatar). Accepted as imageUrl or avatarUrl; stored and returned as avatarUrl.',
+  })
+  @IsOptional()
+  @Transform(({ value, obj }) =>
+    normalizeImageUrl(value ?? obj?.avatarUrl ?? obj?.imageUrl),
+  )
+  @IsString()
+  @IsUrl({ require_protocol: true })
+  imageUrl?: string;
+
+  /** Accepted as input alias for imageUrl; not a separate field. */
+  @Allow()
+  avatarUrl?: unknown;
+
+  @ApiPropertyOptional({
     type: 'string',
     format: 'binary',
     description: 'Contestant profile image (JPEG, PNG, WebP, or GIF)',
@@ -95,4 +114,19 @@ export class ContestantQueryDto {
   @IsInt()
   @Min(1)
   limit?: number;
+}
+
+function normalizeImageUrl(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return (
+      record.secureUrl ?? record.url ?? record.imageUrl ?? record.avatarUrl
+    );
+  }
+
+  return value;
 }

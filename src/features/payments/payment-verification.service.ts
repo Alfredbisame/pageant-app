@@ -30,7 +30,9 @@ export class PaystackService implements PaymentVerifier {
   constructor(private readonly configService: ConfigService) {}
 
   supports(provider: PaymentProvider) {
-    return provider === PaymentProvider.PAYSTACK || provider === PaymentProvider.USSD;
+    return (
+      provider === PaymentProvider.PAYSTACK || provider === PaymentProvider.USSD
+    );
   }
 
   async verify(reference: string): Promise<ProviderVerificationResult> {
