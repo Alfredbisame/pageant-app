@@ -52,6 +52,10 @@ export class CloudinaryStorageService implements StorageService {
     file: Express.Multer.File,
     folder = this.defaultFolder,
   ): Promise<UploadResult> {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('file is required');
+    }
+
     const timestamp = Math.floor(Date.now() / 1000);
     const params: Record<string, string | number> = {
       folder,

@@ -11,7 +11,7 @@ import {
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FileFieldsInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -19,6 +19,7 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { Roles } from '@/common/decorators';
@@ -27,12 +28,16 @@ import {
   assertUploadedFile,
   createImageMulterOptions,
   createMulterOptions,
+  resolveUploadedFile,
 } from '@/shared/storage/multer.config';
 import { FilesService } from './files.service';
 import {
   DeleteFileDto,
   SignedUploadQueryDto,
+  UploadFileBodyDto,
   UploadFileQueryDto,
+  UploadImageBodyDto,
+  UploadMultipleBodyDto,
 } from './dto/files.dto';
 
 @ApiTags('Files')
@@ -47,16 +52,8 @@ export class FilesController {
   @ApiCreatedResponse({ description: 'File uploaded' })
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload a single file to Cloudinary' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: { type: 'string', format: 'binary' },
-        folder: { type: 'string', example: 'contestants' },
-      },
-      required: ['file'],
-    },
-  })
+  @ApiQuery({ name: 'folder', required: false, example: 'contestants' })
+  @ApiBody({ type: UploadFileBodyDto })
   @UseInterceptors(FileInterceptor('file', createMulterOptions()))
   uploadFile(
     @UploadedFile() file: Express.Multer.File,
@@ -71,12 +68,24 @@ export class FilesController {
   @ApiCreatedResponse({ description: 'Image uploaded' })
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload a single image to Cloudinary' })
-  @UseInterceptors(FileInterceptor('file', createImageMulterOptions()))
+  @ApiQuery({ name: 'folder', required: false, example: 'contestants' })
+  @ApiBody({ type: UploadImageBodyDto })
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'file', maxCount: 1 },
+        { name: 'image', maxCount: 1 },
+      ],
+      createImageMulterOptions(),
+    ),
+  )
   uploadImage(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles()
+    files: { file?: Express.Multer.File[]; image?: Express.Multer.File[] },
     @Query() query: UploadFileQueryDto,
   ) {
-    assertUploadedFile(file, 'image');
+    const file = resolveUploadedFile(files?.file?.[0], files?.image?.[0]);
+    assertUploadedFile(file, 'file');
     return this.filesService.upload(file, query.folder);
   }
 
@@ -85,19 +94,8 @@ export class FilesController {
   @ApiCreatedResponse({ description: 'Files uploaded' })
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload multiple files to Cloudinary' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        files: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' },
-        },
-        folder: { type: 'string', example: 'contestants' },
-      },
-      required: ['files'],
-    },
-  })
+  @ApiQuery({ name: 'folder', required: false, example: 'contestants' })
+  @ApiBody({ type: UploadMultipleBodyDto })
   @UseInterceptors(FilesInterceptor('files', 10, createMulterOptions()))
   uploadMany(
     @UploadedFiles() files: Express.Multer.File[],

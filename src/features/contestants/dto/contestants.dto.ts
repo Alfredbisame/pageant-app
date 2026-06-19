@@ -1,4 +1,5 @@
 import {
+  Allow,
   IsEnum,
   IsInt,
   IsOptional,
@@ -30,6 +31,14 @@ export class CreateContestantDto {
   @IsOptional()
   @IsString()
   bio?: string;
+
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    description: 'Contestant profile image (JPEG, PNG, WebP, or GIF)',
+  })
+  @Allow()
+  image?: unknown;
 }
 
 export class UpdateContestantDto {

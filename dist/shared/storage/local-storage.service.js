@@ -26,6 +26,9 @@ let LocalStorageService = class LocalStorageService {
         }
     }
     async upload(file, folder = 'contestants') {
+        if (!file?.buffer?.length) {
+            throw new common_1.BadRequestException('file is required');
+        }
         const targetDir = (0, path_1.join)(this.uploadDir, folder);
         if (!(0, fs_1.existsSync)(targetDir)) {
             (0, fs_1.mkdirSync)(targetDir, { recursive: true });

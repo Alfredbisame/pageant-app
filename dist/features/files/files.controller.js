@@ -30,8 +30,9 @@ let FilesController = class FilesController {
         (0, multer_config_1.assertUploadedFile)(file);
         return this.filesService.upload(file, query.folder);
     }
-    uploadImage(file, query) {
-        (0, multer_config_1.assertUploadedFile)(file, 'image');
+    uploadImage(files, query) {
+        const file = (0, multer_config_1.resolveUploadedFile)(files?.file?.[0], files?.image?.[0]);
+        (0, multer_config_1.assertUploadedFile)(file, 'file');
         return this.filesService.upload(file, query.folder);
     }
     uploadMany(files, query) {
@@ -54,16 +55,8 @@ __decorate([
     (0, swagger_1.ApiCreatedResponse)({ description: 'File uploaded' }),
     (0, swagger_1.ApiConsumes)('multipart/form-data'),
     (0, swagger_1.ApiOperation)({ summary: 'Upload a single file to Cloudinary' }),
-    (0, swagger_1.ApiBody)({
-        schema: {
-            type: 'object',
-            properties: {
-                file: { type: 'string', format: 'binary' },
-                folder: { type: 'string', example: 'contestants' },
-            },
-            required: ['file'],
-        },
-    }),
+    (0, swagger_1.ApiQuery)({ name: 'folder', required: false, example: 'contestants' }),
+    (0, swagger_1.ApiBody)({ type: files_dto_1.UploadFileBodyDto }),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', (0, multer_config_1.createMulterOptions)())),
     __param(0, (0, common_1.UploadedFile)()),
     __param(1, (0, common_1.Query)()),
@@ -77,8 +70,13 @@ __decorate([
     (0, swagger_1.ApiCreatedResponse)({ description: 'Image uploaded' }),
     (0, swagger_1.ApiConsumes)('multipart/form-data'),
     (0, swagger_1.ApiOperation)({ summary: 'Upload a single image to Cloudinary' }),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', (0, multer_config_1.createImageMulterOptions)())),
-    __param(0, (0, common_1.UploadedFile)()),
+    (0, swagger_1.ApiQuery)({ name: 'folder', required: false, example: 'contestants' }),
+    (0, swagger_1.ApiBody)({ type: files_dto_1.UploadImageBodyDto }),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileFieldsInterceptor)([
+        { name: 'file', maxCount: 1 },
+        { name: 'image', maxCount: 1 },
+    ], (0, multer_config_1.createImageMulterOptions)())),
+    __param(0, (0, common_1.UploadedFiles)()),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, files_dto_1.UploadFileQueryDto]),
@@ -90,19 +88,8 @@ __decorate([
     (0, swagger_1.ApiCreatedResponse)({ description: 'Files uploaded' }),
     (0, swagger_1.ApiConsumes)('multipart/form-data'),
     (0, swagger_1.ApiOperation)({ summary: 'Upload multiple files to Cloudinary' }),
-    (0, swagger_1.ApiBody)({
-        schema: {
-            type: 'object',
-            properties: {
-                files: {
-                    type: 'array',
-                    items: { type: 'string', format: 'binary' },
-                },
-                folder: { type: 'string', example: 'contestants' },
-            },
-            required: ['files'],
-        },
-    }),
+    (0, swagger_1.ApiQuery)({ name: 'folder', required: false, example: 'contestants' }),
+    (0, swagger_1.ApiBody)({ type: files_dto_1.UploadMultipleBodyDto }),
     (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('files', 10, (0, multer_config_1.createMulterOptions)())),
     __param(0, (0, common_1.UploadedFiles)()),
     __param(1, (0, common_1.Query)()),

@@ -28,12 +28,14 @@ let AdminContestantsController = class AdminContestantsController {
         this.contestantsService = contestantsService;
     }
     create(dto, file, user) {
+        (0, multer_config_1.assertUploadedFile)(file, 'image');
         return this.contestantsService.create(dto, file, user);
     }
     update(id, dto, user) {
         return this.contestantsService.update(id, dto, user);
     }
     uploadAvatar(id, file, user) {
+        (0, multer_config_1.assertUploadedFile)(file, 'image');
         return this.contestantsService.uploadAvatar(id, file, user);
     }
     remove(id, user) {
@@ -47,6 +49,7 @@ __decorate([
     (0, swagger_1.ApiCreatedResponse)({ description: 'Contestant created' }),
     (0, swagger_1.ApiConsumes)('multipart/form-data'),
     (0, swagger_1.ApiOperation)({ summary: 'Create contestant with avatar upload' }),
+    (0, swagger_1.ApiBody)({ type: contestants_dto_1.CreateContestantDto }),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image', (0, multer_config_1.createImageMulterOptions)())),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.UploadedFile)()),

@@ -5,3 +5,4 @@ node_modules/
 coverage/
 *.log
 docs/FRONTEND_API_INTEGRATION.md
+docs/ADMIN_API_INTEGRATION.md

@@ -5,6 +5,7 @@ exports.createFileFilter = createFileFilter;
 exports.createMulterOptions = createMulterOptions;
 exports.createImageMulterOptions = createImageMulterOptions;
 exports.assertUploadedFile = assertUploadedFile;
+exports.resolveUploadedFile = resolveUploadedFile;
 const common_1 = require("@nestjs/common");
 const multer_1 = require("multer");
 const maxFileSizeMb = parseInt(process.env.MAX_FILE_SIZE_MB ?? '5', 10);
@@ -15,14 +16,23 @@ const FILE_MIME_TYPES = [
     'video/webm',
     'application/pdf',
 ];
+function invalidTypeError(mimetype, allowed) {
+    return new common_1.UnsupportedMediaTypeException(`Invalid file type "${mimetype}". Allowed: ${allowed.join(', ')}`);
+}
 function createImageFileFilter() {
     return (_req, file, cb) => {
-        cb(null, IMAGE_MIME_TYPES.includes(file.mimetype));
+        if (!IMAGE_MIME_TYPES.includes(file.mimetype)) {
+            return cb(invalidTypeError(file.mimetype, IMAGE_MIME_TYPES), false);
+        }
+        cb(null, true);
     };
 }
 function createFileFilter() {
     return (_req, file, cb) => {
-        cb(null, FILE_MIME_TYPES.includes(file.mimetype));
+        if (!FILE_MIME_TYPES.includes(file.mimetype)) {
+            return cb(invalidTypeError(file.mimetype, FILE_MIME_TYPES), false);
+        }
+        cb(null, true);
     };
 }
 function createMulterOptions() {
@@ -43,5 +53,8 @@ function assertUploadedFile(file, label = 'file') {
     if (!file) {
         throw new common_1.BadRequestException(`${label} is required`);
     }
+}
+function resolveUploadedFile(...candidates) {
+    return candidates.find((file) => file?.buffer?.length);
 }
 //# sourceMappingURL=multer.config.js.map

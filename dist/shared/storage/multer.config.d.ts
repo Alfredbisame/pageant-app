@@ -15,3 +15,4 @@ export declare function createImageMulterOptions(): {
     fileFilter: (_req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, acceptFile: boolean) => void) => void;
 };
 export declare function assertUploadedFile(file: Express.Multer.File | undefined, label?: string): asserts file is Express.Multer.File;
+export declare function resolveUploadedFile(...candidates: (Express.Multer.File | undefined)[]): Express.Multer.File | undefined;

@@ -4,6 +4,7 @@ export declare class CreateContestantDto {
     entryNumber: number;
     level: ContestantLevel;
     bio?: string;
+    image?: unknown;
 }
 export declare class UpdateContestantDto {
     displayName?: string;

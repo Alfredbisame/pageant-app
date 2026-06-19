@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { mkdirSync, existsSync } from 'fs';
 import { join, extname } from 'path';
@@ -23,6 +23,10 @@ export class LocalStorageService implements StorageService {
     file: Express.Multer.File,
     folder = 'contestants',
   ): Promise<UploadResult> {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('file is required');
+    }
+
     const targetDir = join(this.uploadDir, folder);
     if (!existsSync(targetDir)) {
       mkdirSync(targetDir, { recursive: true });

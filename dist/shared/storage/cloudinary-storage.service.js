@@ -30,6 +30,9 @@ let CloudinaryStorageService = class CloudinaryStorageService {
         this.defaultFolder = this.configService.get('storage.cloudinaryFolder', 'ell-pageant');
     }
     async upload(file, folder = this.defaultFolder) {
+        if (!file?.buffer?.length) {
+            throw new common_1.BadRequestException('file is required');
+        }
         const timestamp = Math.floor(Date.now() / 1000);
         const params = {
             folder,

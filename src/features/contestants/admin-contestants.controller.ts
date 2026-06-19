@@ -14,6 +14,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
   ApiOkResponse,
@@ -21,7 +22,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ContestantsService } from './contestants.service';
-import { createImageMulterOptions } from '@/shared/storage/multer.config';
+import {
+  assertUploadedFile,
+  createImageMulterOptions,
+} from '@/shared/storage/multer.config';
 import {
   CreateContestantDto,
   UpdateContestantDto,
@@ -43,12 +47,14 @@ export class AdminContestantsController {
   @ApiCreatedResponse({ description: 'Contestant created' })
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create contestant with avatar upload' })
+  @ApiBody({ type: CreateContestantDto })
   @UseInterceptors(FileInterceptor('image', createImageMulterOptions()))
   create(
     @Body() dto: CreateContestantDto,
     @UploadedFile() file: Express.Multer.File,
     @CurrentUser() user: AuthenticatedUser,
   ) {
+    assertUploadedFile(file, 'image');
     return this.contestantsService.create(dto, file, user);
   }
 
@@ -75,6 +81,7 @@ export class AdminContestantsController {
     @UploadedFile() file: Express.Multer.File,
     @CurrentUser() user: AuthenticatedUser,
   ) {
+    assertUploadedFile(file, 'image');
     return this.contestantsService.uploadAvatar(id, file, user);
   }
 

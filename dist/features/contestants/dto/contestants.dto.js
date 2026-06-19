@@ -19,6 +19,7 @@ class CreateContestantDto {
     entryNumber;
     level;
     bio;
+    image;
 }
 exports.CreateContestantDto = CreateContestantDto;
 __decorate([
@@ -45,6 +46,15 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateContestantDto.prototype, "bio", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        type: 'string',
+        format: 'binary',
+        description: 'Contestant profile image (JPEG, PNG, WebP, or GIF)',
+    }),
+    (0, class_validator_1.Allow)(),
+    __metadata("design:type", Object)
+], CreateContestantDto.prototype, "image", void 0);
 class UpdateContestantDto {
     displayName;
     entryNumber;

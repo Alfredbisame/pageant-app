@@ -57,11 +57,12 @@ src/
 
 ## Frontend Integration
 
-The voter-facing UI is a **separate Next.js 16 app** (not in this repo). See the full integration guide:
+The voter-facing UI is a **separate Next.js 16 app** (not in this repo). See the full integration guides:
 
-**[docs/FRONTEND_API_INTEGRATION.md](docs/FRONTEND_API_INTEGRATION.md)**
-
-Covers server actions, domain services, Pino logging, all voter-facing endpoints, payment flow (Paystack/Hubtel), Socket.IO realtime, and page-by-page integration for Home, Contestants, Leaderboard, Voting, and About.
+| App | Guide |
+|-----|-------|
+| Voter UI | **[docs/FRONTEND_API_INTEGRATION.md](docs/FRONTEND_API_INTEGRATION.md)** — server actions, domain services, Pino logging, voter endpoints, payment flow (Paystack/Hubtel), Socket.IO realtime, page map for Home, Contestants, Leaderboard, Voting, and About |
+| Admin dashboard | **[docs/ADMIN_API_INTEGRATION.md](docs/ADMIN_API_INTEGRATION.md)** — admin auth & roles, CRUD for contestants/packages/users/event config, file uploads, page map for Dashboard, Contestants, Vote Packages, Users, Event Config, and Team |
 
 ## Environment Variables
 

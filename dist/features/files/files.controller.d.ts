@@ -4,7 +4,10 @@ export declare class FilesController {
     private readonly filesService;
     constructor(filesService: FilesService);
     uploadFile(file: Express.Multer.File, query: UploadFileQueryDto): Promise<import("../../shared/storage/storage.interface").UploadResult>;
-    uploadImage(file: Express.Multer.File, query: UploadFileQueryDto): Promise<import("../../shared/storage/storage.interface").UploadResult>;
+    uploadImage(files: {
+        file?: Express.Multer.File[];
+        image?: Express.Multer.File[];
+    }, query: UploadFileQueryDto): Promise<import("../../shared/storage/storage.interface").UploadResult>;
     uploadMany(files: Express.Multer.File[], query: UploadFileQueryDto): Promise<{
         files: import("../../shared/storage/storage.interface").UploadResult[];
     }>;

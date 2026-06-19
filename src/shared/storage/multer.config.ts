@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, UnsupportedMediaTypeException } from '@nestjs/common';
 import { memoryStorage } from 'multer';
 
 const maxFileSizeMb = parseInt(process.env.MAX_FILE_SIZE_MB ?? '5', 10);
@@ -11,13 +11,25 @@ const FILE_MIME_TYPES = [
   'application/pdf',
 ];
 
+function invalidTypeError(
+  mimetype: string,
+  allowed: string[],
+): UnsupportedMediaTypeException {
+  return new UnsupportedMediaTypeException(
+    `Invalid file type "${mimetype}". Allowed: ${allowed.join(', ')}`,
+  );
+}
+
 export function createImageFileFilter() {
   return (
     _req: Express.Request,
     file: Express.Multer.File,
     cb: (error: Error | null, acceptFile: boolean) => void,
   ) => {
-    cb(null, IMAGE_MIME_TYPES.includes(file.mimetype));
+    if (!IMAGE_MIME_TYPES.includes(file.mimetype)) {
+      return cb(invalidTypeError(file.mimetype, IMAGE_MIME_TYPES), false);
+    }
+    cb(null, true);
   };
 }
 
@@ -27,7 +39,10 @@ export function createFileFilter() {
     file: Express.Multer.File,
     cb: (error: Error | null, acceptFile: boolean) => void,
   ) => {
-    cb(null, FILE_MIME_TYPES.includes(file.mimetype));
+    if (!FILE_MIME_TYPES.includes(file.mimetype)) {
+      return cb(invalidTypeError(file.mimetype, FILE_MIME_TYPES), false);
+    }
+    cb(null, true);
   };
 }
 
@@ -54,4 +69,10 @@ export function assertUploadedFile(
   if (!file) {
     throw new BadRequestException(`${label} is required`);
   }
+}
+
+export function resolveUploadedFile(
+  ...candidates: (Express.Multer.File | undefined)[]
+): Express.Multer.File | undefined {
+  return candidates.find((file) => file?.buffer?.length);
 }
