@@ -19,6 +19,7 @@ const schemaModels = [
     { name: schemas_1.VoteLedger.name, schema: schemas_1.VoteLedgerSchema },
     { name: schemas_1.EventConfig.name, schema: schemas_1.EventConfigSchema },
     { name: schemas_1.AuditLog.name, schema: schemas_1.AuditLogSchema },
+    { name: schemas_1.AboutPage.name, schema: schemas_1.AboutPageSchema },
 ];
 let DatabaseModule = class DatabaseModule {
 };

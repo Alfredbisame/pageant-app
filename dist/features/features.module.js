@@ -20,6 +20,7 @@ const event_config_module_1 = require("./event-config/event-config.module");
 const audit_module_1 = require("./audit/audit.module");
 const health_module_1 = require("./health/health.module");
 const files_module_1 = require("./files/files.module");
+const about_page_module_1 = require("./about-page/about-page.module");
 const featureModules = [
     auth_module_1.AuthModule,
     users_module_1.UsersModule,
@@ -32,6 +33,7 @@ const featureModules = [
     audit_module_1.AuditModule,
     health_module_1.HealthModule,
     files_module_1.FilesModule,
+    about_page_module_1.AboutPageModule,
 ];
 let FeaturesModule = FeaturesModule_1 = class FeaturesModule {
     static register() {

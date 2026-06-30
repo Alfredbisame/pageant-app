@@ -16,6 +16,8 @@ import {
   VoteLedgerSchema,
   VotePackage,
   VotePackageSchema,
+  AboutPage,
+  AboutPageSchema,
 } from './schemas';
 
 const schemaModels = [
@@ -26,7 +28,9 @@ const schemaModels = [
   { name: VoteLedger.name, schema: VoteLedgerSchema },
   { name: EventConfig.name, schema: EventConfigSchema },
   { name: AuditLog.name, schema: AuditLogSchema },
+  { name: AboutPage.name, schema: AboutPageSchema },
 ];
+
 
 @Module({
   imports: [

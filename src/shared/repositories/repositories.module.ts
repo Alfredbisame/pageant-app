@@ -7,6 +7,7 @@ import { PaymentRepository } from './payment.repository';
 import { VoteLedgerRepository } from './vote-ledger.repository';
 import { EventConfigRepository } from './event-config.repository';
 import { AuditLogRepository } from './audit-log.repository';
+import { AboutPageRepository } from './about-page.repository';
 
 const repositories = [
   UserRepository,
@@ -16,6 +17,7 @@ const repositories = [
   VoteLedgerRepository,
   EventConfigRepository,
   AuditLogRepository,
+  AboutPageRepository,
 ];
 
 @Global()
@@ -34,4 +36,5 @@ export {
   VoteLedgerRepository,
   EventConfigRepository,
   AuditLogRepository,
+  AboutPageRepository,
 };

@@ -5,6 +5,7 @@ import { PaymentRepository } from './payment.repository';
 import { VoteLedgerRepository } from './vote-ledger.repository';
 import { EventConfigRepository } from './event-config.repository';
 import { AuditLogRepository } from './audit-log.repository';
+import { AboutPageRepository } from './about-page.repository';
 export declare class RepositoriesModule {
 }
-export { UserRepository, ContestantRepository, VotePackageRepository, PaymentRepository, VoteLedgerRepository, EventConfigRepository, AuditLogRepository, };
+export { UserRepository, ContestantRepository, VotePackageRepository, PaymentRepository, VoteLedgerRepository, EventConfigRepository, AuditLogRepository, AboutPageRepository, };

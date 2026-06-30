@@ -10,6 +10,7 @@ import { EventConfigModule } from './event-config/event-config.module';
 import { AuditModule } from './audit/audit.module';
 import { HealthModule } from './health/health.module';
 import { FilesModule } from './files/files.module';
+import { AboutPageModule } from './about-page/about-page.module';
 
 const featureModules = [
   AuthModule,
@@ -23,6 +24,7 @@ const featureModules = [
   AuditModule,
   HealthModule,
   FilesModule,
+  AboutPageModule,
 ];
 
 @Module({})

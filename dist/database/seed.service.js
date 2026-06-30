@@ -49,24 +49,32 @@ const config_1 = require("@nestjs/config");
 const argon2 = __importStar(require("argon2"));
 const user_repository_1 = require("../shared/repositories/user.repository");
 const event_config_repository_1 = require("../shared/repositories/event-config.repository");
+const about_page_repository_1 = require("../shared/repositories/about-page.repository");
 const constants_1 = require("../common/constants");
 let SeedService = SeedService_1 = class SeedService {
     userRepository;
     eventConfigRepository;
+    aboutPageRepository;
     configService;
     logger = new common_1.Logger(SeedService_1.name);
-    constructor(userRepository, eventConfigRepository, configService) {
+    constructor(userRepository, eventConfigRepository, aboutPageRepository, configService) {
         this.userRepository = userRepository;
         this.eventConfigRepository = eventConfigRepository;
+        this.aboutPageRepository = aboutPageRepository;
         this.configService = configService;
     }
     async onModuleInit() {
         await this.seedEventConfig();
+        await this.seedAboutPage();
         await this.seedAdminUser();
     }
     async seedEventConfig() {
         await this.eventConfigRepository.getSingleton();
         this.logger.log('Event config initialized');
+    }
+    async seedAboutPage() {
+        await this.aboutPageRepository.getSingleton();
+        this.logger.log('About page config initialized');
     }
     async seedAdminUser() {
         const email = this.configService.get('seed.adminEmail');
@@ -97,6 +105,7 @@ exports.SeedService = SeedService = SeedService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [user_repository_1.UserRepository,
         event_config_repository_1.EventConfigRepository,
+        about_page_repository_1.AboutPageRepository,
         config_1.ConfigService])
 ], SeedService);
 //# sourceMappingURL=seed.service.js.map

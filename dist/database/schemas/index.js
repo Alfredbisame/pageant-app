@@ -21,4 +21,5 @@ __exportStar(require("./payment.schema"), exports);
 __exportStar(require("./vote-ledger.schema"), exports);
 __exportStar(require("./event-config.schema"), exports);
 __exportStar(require("./audit-log.schema"), exports);
+__exportStar(require("./about-page.schema"), exports);
 //# sourceMappingURL=index.js.map
