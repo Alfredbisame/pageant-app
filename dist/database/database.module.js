@@ -20,6 +20,10 @@ const schemaModels = [
     { name: schemas_1.EventConfig.name, schema: schemas_1.EventConfigSchema },
     { name: schemas_1.AuditLog.name, schema: schemas_1.AuditLogSchema },
     { name: schemas_1.AboutPage.name, schema: schemas_1.AboutPageSchema },
+    { name: schemas_1.HomePageHero.name, schema: schemas_1.HomePageHeroSchema },
+    { name: schemas_1.RewardsSection.name, schema: schemas_1.RewardsSectionSchema },
+    { name: schemas_1.Prize.name, schema: schemas_1.PrizeSchema },
+    { name: schemas_1.LegacySection.name, schema: schemas_1.LegacySectionSchema },
 ];
 let DatabaseModule = class DatabaseModule {
 };

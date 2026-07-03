@@ -24,7 +24,10 @@ export class TeamMemberDto {
   @IsUrl({}, { message: 'image must be a valid URL' })
   image!: string;
 
-  @ApiPropertyOptional({ description: 'Sort order (lower = first)', example: 1 })
+  @ApiPropertyOptional({
+    description: 'Sort order (lower = first)',
+    example: 1,
+  })
   @IsOptional()
   @IsInt()
   @Min(0)

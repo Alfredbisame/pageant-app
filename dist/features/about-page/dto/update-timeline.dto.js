@@ -53,7 +53,10 @@ __decorate([
     __metadata("design:type", String)
 ], TimelineItemDto.prototype, "accent", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Sort order (lower = first)', example: 1 }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Sort order (lower = first)',
+        example: 1,
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.Min)(0),
@@ -66,7 +69,10 @@ class UpdateTimelineDto {
 }
 exports.UpdateTimelineDto = UpdateTimelineDto;
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Section heading', example: 'Our Journey' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Section heading',
+        example: 'Our Journey',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

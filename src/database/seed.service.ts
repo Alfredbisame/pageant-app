@@ -4,6 +4,9 @@ import * as argon2 from 'argon2';
 import { UserRepository } from '@/shared/repositories/user.repository';
 import { EventConfigRepository } from '@/shared/repositories/event-config.repository';
 import { AboutPageRepository } from '@/shared/repositories/about-page.repository';
+import { HeroSectionRepository } from '@/shared/repositories/hero-section.repository';
+import { RewardsSectionRepository } from '@/shared/repositories/rewards-section.repository';
+import { LegacySectionRepository } from '@/shared/repositories/legacy-section.repository';
 import { UserRole, UserStatus } from '@/common/constants';
 
 @Injectable()
@@ -14,12 +17,16 @@ export class SeedService implements OnModuleInit {
     private readonly userRepository: UserRepository,
     private readonly eventConfigRepository: EventConfigRepository,
     private readonly aboutPageRepository: AboutPageRepository,
+    private readonly heroSectionRepository: HeroSectionRepository,
+    private readonly rewardsSectionRepository: RewardsSectionRepository,
+    private readonly legacySectionRepository: LegacySectionRepository,
     private readonly configService: ConfigService,
   ) {}
 
   async onModuleInit() {
     await this.seedEventConfig();
     await this.seedAboutPage();
+    await this.seedHomePage();
     await this.seedAdminUser();
   }
 
@@ -31,6 +38,13 @@ export class SeedService implements OnModuleInit {
   private async seedAboutPage() {
     await this.aboutPageRepository.getSingleton();
     this.logger.log('About page config initialized');
+  }
+
+  private async seedHomePage() {
+    await this.heroSectionRepository.getSingleton();
+    await this.rewardsSectionRepository.getSingleton();
+    await this.legacySectionRepository.getSingleton();
+    this.logger.log('Homepage config (Hero, Rewards, Legacy) initialized');
   }
 
   private async seedAdminUser() {

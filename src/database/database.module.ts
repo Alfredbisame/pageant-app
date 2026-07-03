@@ -18,6 +18,14 @@ import {
   VotePackageSchema,
   AboutPage,
   AboutPageSchema,
+  HomePageHero,
+  HomePageHeroSchema,
+  RewardsSection,
+  RewardsSectionSchema,
+  Prize,
+  PrizeSchema,
+  LegacySection,
+  LegacySectionSchema,
 } from './schemas';
 
 const schemaModels = [
@@ -29,8 +37,11 @@ const schemaModels = [
   { name: EventConfig.name, schema: EventConfigSchema },
   { name: AuditLog.name, schema: AuditLogSchema },
   { name: AboutPage.name, schema: AboutPageSchema },
+  { name: HomePageHero.name, schema: HomePageHeroSchema },
+  { name: RewardsSection.name, schema: RewardsSectionSchema },
+  { name: Prize.name, schema: PrizeSchema },
+  { name: LegacySection.name, schema: LegacySectionSchema },
 ];
-
 
 @Module({
   imports: [

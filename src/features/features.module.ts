@@ -11,6 +11,7 @@ import { AuditModule } from './audit/audit.module';
 import { HealthModule } from './health/health.module';
 import { FilesModule } from './files/files.module';
 import { AboutPageModule } from './about-page/about-page.module';
+import { HomePageModule } from './home-page/home-page.module';
 
 const featureModules = [
   AuthModule,
@@ -25,6 +26,7 @@ const featureModules = [
   HealthModule,
   FilesModule,
   AboutPageModule,
+  HomePageModule,
 ];
 
 @Module({})

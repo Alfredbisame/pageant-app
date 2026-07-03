@@ -50,22 +50,32 @@ const argon2 = __importStar(require("argon2"));
 const user_repository_1 = require("../shared/repositories/user.repository");
 const event_config_repository_1 = require("../shared/repositories/event-config.repository");
 const about_page_repository_1 = require("../shared/repositories/about-page.repository");
+const hero_section_repository_1 = require("../shared/repositories/hero-section.repository");
+const rewards_section_repository_1 = require("../shared/repositories/rewards-section.repository");
+const legacy_section_repository_1 = require("../shared/repositories/legacy-section.repository");
 const constants_1 = require("../common/constants");
 let SeedService = SeedService_1 = class SeedService {
     userRepository;
     eventConfigRepository;
     aboutPageRepository;
+    heroSectionRepository;
+    rewardsSectionRepository;
+    legacySectionRepository;
     configService;
     logger = new common_1.Logger(SeedService_1.name);
-    constructor(userRepository, eventConfigRepository, aboutPageRepository, configService) {
+    constructor(userRepository, eventConfigRepository, aboutPageRepository, heroSectionRepository, rewardsSectionRepository, legacySectionRepository, configService) {
         this.userRepository = userRepository;
         this.eventConfigRepository = eventConfigRepository;
         this.aboutPageRepository = aboutPageRepository;
+        this.heroSectionRepository = heroSectionRepository;
+        this.rewardsSectionRepository = rewardsSectionRepository;
+        this.legacySectionRepository = legacySectionRepository;
         this.configService = configService;
     }
     async onModuleInit() {
         await this.seedEventConfig();
         await this.seedAboutPage();
+        await this.seedHomePage();
         await this.seedAdminUser();
     }
     async seedEventConfig() {
@@ -75,6 +85,12 @@ let SeedService = SeedService_1 = class SeedService {
     async seedAboutPage() {
         await this.aboutPageRepository.getSingleton();
         this.logger.log('About page config initialized');
+    }
+    async seedHomePage() {
+        await this.heroSectionRepository.getSingleton();
+        await this.rewardsSectionRepository.getSingleton();
+        await this.legacySectionRepository.getSingleton();
+        this.logger.log('Homepage config (Hero, Rewards, Legacy) initialized');
     }
     async seedAdminUser() {
         const email = this.configService.get('seed.adminEmail');
@@ -106,6 +122,9 @@ exports.SeedService = SeedService = SeedService_1 = __decorate([
     __metadata("design:paramtypes", [user_repository_1.UserRepository,
         event_config_repository_1.EventConfigRepository,
         about_page_repository_1.AboutPageRepository,
+        hero_section_repository_1.HeroSectionRepository,
+        rewards_section_repository_1.RewardsSectionRepository,
+        legacy_section_repository_1.LegacySectionRepository,
         config_1.ConfigService])
 ], SeedService);
 //# sourceMappingURL=seed.service.js.map

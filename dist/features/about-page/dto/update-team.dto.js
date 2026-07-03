@@ -37,7 +37,10 @@ __decorate([
     __metadata("design:type", String)
 ], TeamMemberDto.prototype, "image", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Sort order (lower = first)', example: 1 }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Sort order (lower = first)',
+        example: 1,
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.Min)(0),

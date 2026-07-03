@@ -6,7 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AboutPageRepository = exports.AuditLogRepository = exports.EventConfigRepository = exports.VoteLedgerRepository = exports.PaymentRepository = exports.VotePackageRepository = exports.ContestantRepository = exports.UserRepository = exports.RepositoriesModule = void 0;
+exports.LegacySectionRepository = exports.PrizeRepository = exports.RewardsSectionRepository = exports.HeroSectionRepository = exports.AboutPageRepository = exports.AuditLogRepository = exports.EventConfigRepository = exports.VoteLedgerRepository = exports.PaymentRepository = exports.VotePackageRepository = exports.ContestantRepository = exports.UserRepository = exports.RepositoriesModule = void 0;
 const common_1 = require("@nestjs/common");
 const database_module_1 = require("../../database/database.module");
 const user_repository_1 = require("./user.repository");
@@ -25,6 +25,14 @@ const audit_log_repository_1 = require("./audit-log.repository");
 Object.defineProperty(exports, "AuditLogRepository", { enumerable: true, get: function () { return audit_log_repository_1.AuditLogRepository; } });
 const about_page_repository_1 = require("./about-page.repository");
 Object.defineProperty(exports, "AboutPageRepository", { enumerable: true, get: function () { return about_page_repository_1.AboutPageRepository; } });
+const hero_section_repository_1 = require("./hero-section.repository");
+Object.defineProperty(exports, "HeroSectionRepository", { enumerable: true, get: function () { return hero_section_repository_1.HeroSectionRepository; } });
+const rewards_section_repository_1 = require("./rewards-section.repository");
+Object.defineProperty(exports, "RewardsSectionRepository", { enumerable: true, get: function () { return rewards_section_repository_1.RewardsSectionRepository; } });
+const prize_repository_1 = require("./prize.repository");
+Object.defineProperty(exports, "PrizeRepository", { enumerable: true, get: function () { return prize_repository_1.PrizeRepository; } });
+const legacy_section_repository_1 = require("./legacy-section.repository");
+Object.defineProperty(exports, "LegacySectionRepository", { enumerable: true, get: function () { return legacy_section_repository_1.LegacySectionRepository; } });
 const repositories = [
     user_repository_1.UserRepository,
     contestant_repository_1.ContestantRepository,
@@ -34,6 +42,10 @@ const repositories = [
     event_config_repository_1.EventConfigRepository,
     audit_log_repository_1.AuditLogRepository,
     about_page_repository_1.AboutPageRepository,
+    hero_section_repository_1.HeroSectionRepository,
+    rewards_section_repository_1.RewardsSectionRepository,
+    prize_repository_1.PrizeRepository,
+    legacy_section_repository_1.LegacySectionRepository,
 ];
 let RepositoriesModule = class RepositoriesModule {
 };

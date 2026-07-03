@@ -21,6 +21,7 @@ const audit_module_1 = require("./audit/audit.module");
 const health_module_1 = require("./health/health.module");
 const files_module_1 = require("./files/files.module");
 const about_page_module_1 = require("./about-page/about-page.module");
+const home_page_module_1 = require("./home-page/home-page.module");
 const featureModules = [
     auth_module_1.AuthModule,
     users_module_1.UsersModule,
@@ -34,6 +35,7 @@ const featureModules = [
     health_module_1.HealthModule,
     files_module_1.FilesModule,
     about_page_module_1.AboutPageModule,
+    home_page_module_1.HomePageModule,
 ];
 let FeaturesModule = FeaturesModule_1 = class FeaturesModule {
     static register() {

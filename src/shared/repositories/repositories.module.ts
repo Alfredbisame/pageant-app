@@ -8,6 +8,10 @@ import { VoteLedgerRepository } from './vote-ledger.repository';
 import { EventConfigRepository } from './event-config.repository';
 import { AuditLogRepository } from './audit-log.repository';
 import { AboutPageRepository } from './about-page.repository';
+import { HeroSectionRepository } from './hero-section.repository';
+import { RewardsSectionRepository } from './rewards-section.repository';
+import { PrizeRepository } from './prize.repository';
+import { LegacySectionRepository } from './legacy-section.repository';
 
 const repositories = [
   UserRepository,
@@ -18,6 +22,10 @@ const repositories = [
   EventConfigRepository,
   AuditLogRepository,
   AboutPageRepository,
+  HeroSectionRepository,
+  RewardsSectionRepository,
+  PrizeRepository,
+  LegacySectionRepository,
 ];
 
 @Global()
@@ -37,4 +45,8 @@ export {
   EventConfigRepository,
   AuditLogRepository,
   AboutPageRepository,
+  HeroSectionRepository,
+  RewardsSectionRepository,
+  PrizeRepository,
+  LegacySectionRepository,
 };

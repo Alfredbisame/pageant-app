@@ -36,7 +36,10 @@ export class TimelineItemDto {
   @IsIn(['primary', 'secondary', 'anniversary'])
   accent!: string;
 
-  @ApiPropertyOptional({ description: 'Sort order (lower = first)', example: 1 })
+  @ApiPropertyOptional({
+    description: 'Sort order (lower = first)',
+    example: 1,
+  })
   @IsOptional()
   @IsInt()
   @Min(0)
@@ -44,7 +47,10 @@ export class TimelineItemDto {
 }
 
 export class UpdateTimelineDto {
-  @ApiPropertyOptional({ description: 'Section heading', example: 'Our Journey' })
+  @ApiPropertyOptional({
+    description: 'Section heading',
+    example: 'Our Journey',
+  })
   @IsOptional()
   @IsString()
   heading?: string;

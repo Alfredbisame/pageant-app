@@ -9,9 +9,7 @@ import { BaseRepository } from './base.repository';
 
 @Injectable()
 export class AboutPageRepository extends BaseRepository<AboutPageDocument> {
-  constructor(
-    @InjectModel(AboutPage.name) model: Model<AboutPageDocument>,
-  ) {
+  constructor(@InjectModel(AboutPage.name) model: Model<AboutPageDocument>) {
     super(model);
   }
 
