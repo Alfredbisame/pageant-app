@@ -16,7 +16,11 @@ import { PaymentVerificationService } from '@/features/payments/payment-verifica
 import { RealtimeGateway } from '@/realtime/realtime.gateway';
 import { LeaderboardService } from '@/features/leaderboard/leaderboard.service';
 import { AuditService } from '@/features/audit/audit.service';
-import { VotingConfirmDto, VotingQuoteDto } from './dto/voting.dto';
+import {
+  VotingConfirmDto,
+  VotingQuoteDto,
+  AdminCreditVotesDto,
+} from './dto/voting.dto';
 import { PaymentStatus, VoteLedgerType } from '@/common/constants';
 import { generateReference } from '@/common/utils/helpers';
 import { AuthenticatedUser } from '@/common/types';
@@ -26,6 +30,7 @@ export interface QuoteResult {
   platformFee: number;
   totalAmount: number;
   votes: number;
+  pricePerVote: number;
   currency: string;
 }
 
@@ -42,7 +47,20 @@ export class QuoteService {
     await this.assertVotingOpen();
     await this.assertContestant(dto.contestantId);
 
+    if (dto.packageId && dto.customAmount) {
+      throw new BadRequestException(
+        'Provide either packageId or customAmount, not both',
+      );
+    }
+
     const eventConfig = await this.eventConfigRepository.getSingleton();
+    const fallbackPrice = this.configService.get<number>(
+      'payments.pricePerVotePaise',
+      100,
+    );
+    const pricePerVote =
+      await this.votePackageRepository.resolvePricePerVotePaise(fallbackPrice);
+
     let baseAmount: number;
     let votes: number;
 
@@ -55,10 +73,11 @@ export class QuoteService {
       votes = pkg.votes;
     } else if (dto.customAmount) {
       baseAmount = dto.customAmount;
-      const pricePerVote = this.configService.get<number>(
-        'payments.pricePerVotePaise',
-        100,
-      );
+      if (baseAmount < pricePerVote) {
+        throw new BadRequestException(
+          `Custom amount must be at least ${pricePerVote} pesewas (1 vote)`,
+        );
+      }
       votes = Math.floor(baseAmount / pricePerVote);
       if (votes < 1) {
         throw new BadRequestException('Custom amount too low for any votes');
@@ -75,6 +94,7 @@ export class QuoteService {
       platformFee,
       totalAmount,
       votes,
+      pricePerVote,
       currency: 'GHS',
     };
   }
@@ -122,6 +142,12 @@ export class VotingService {
   }
 
   async confirm(dto: VotingConfirmDto, user?: AuthenticatedUser) {
+    if (dto.packageId && dto.customAmount) {
+      throw new BadRequestException(
+        'Provide either packageId or customAmount, not both',
+      );
+    }
+
     const existing = await this.paymentRepository.findByProviderReference(
       dto.providerReference,
     );
@@ -268,5 +294,105 @@ export class VotingService {
       votesPurchased: payment.votesPurchased,
       contestantId: payment.contestantId.toString(),
     };
+  }
+
+  async adminCreditVotes(dto: AdminCreditVotesDto, admin: AuthenticatedUser) {
+    if (dto.providerReference) {
+      const existingPayment =
+        await this.paymentRepository.findByProviderReference(
+          dto.providerReference,
+        );
+      if (existingPayment?.status === PaymentStatus.SUCCESS) {
+        const contestant = await this.contestantRepository.findById(
+          existingPayment.contestantId.toString(),
+        );
+        return {
+          success: true,
+          alreadyCredited: true,
+          contestantId: existingPayment.contestantId.toString(),
+          votesAdded: existingPayment.votesPurchased,
+          newVoteTotal: contestant?.voteCount ?? 0,
+        };
+      }
+
+      const existingAdjustment =
+        await this.voteLedgerRepository.findByProviderReference(
+          dto.providerReference,
+        );
+      if (existingAdjustment) {
+        const contestant = await this.contestantRepository.findById(
+          existingAdjustment.contestantId.toString(),
+        );
+        return {
+          success: true,
+          alreadyCredited: true,
+          contestantId: existingAdjustment.contestantId.toString(),
+          votesAdded: existingAdjustment.votes,
+          newVoteTotal: contestant?.voteCount ?? 0,
+        };
+      }
+    }
+
+    const contestant = await this.contestantRepository.findById(
+      dto.contestantId,
+    );
+    if (!contestant || !contestant.isActive) {
+      throw new NotFoundException('Contestant not found');
+    }
+
+    const session = await this.connection.startSession();
+    session.startTransaction();
+
+    try {
+      await this.voteLedgerRepository.create({
+        contestantId: new Types.ObjectId(dto.contestantId),
+        votes: dto.votes,
+        type: VoteLedgerType.ADJUSTMENT,
+        reason: dto.reason,
+        adjustedByUserId: new Types.ObjectId(admin.id),
+        providerReference: dto.providerReference,
+      });
+
+      const updatedContestant =
+        await this.contestantRepository.incrementVoteCount(
+          dto.contestantId,
+          dto.votes,
+        );
+
+      await session.commitTransaction();
+
+      await this.auditService.log({
+        actorId: admin.id,
+        action: 'votes.admin_credit',
+        entity: 'contestant',
+        entityId: dto.contestantId,
+        summary: {
+          votes: dto.votes,
+          reason: dto.reason,
+          providerReference: dto.providerReference,
+        },
+      });
+
+      const leaderboard = await this.leaderboardService.getLeaderboard(50, 0);
+      this.realtimeGateway.emitLeaderboardUpdate(leaderboard);
+      this.realtimeGateway.emitVoteConfirmed({
+        contestantId: dto.contestantId,
+        votesAdded: dto.votes,
+        newTotal: updatedContestant?.voteCount ?? 0,
+      });
+
+      return {
+        success: true,
+        alreadyCredited: false,
+        contestantId: dto.contestantId,
+        votesAdded: dto.votes,
+        newVoteTotal: updatedContestant?.voteCount ?? 0,
+      };
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      void session.endSession();
+    }
   }
 }

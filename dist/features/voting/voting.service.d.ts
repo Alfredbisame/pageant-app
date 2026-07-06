@@ -9,7 +9,7 @@ import { PaymentVerificationService } from "../payments/payment-verification.ser
 import { RealtimeGateway } from "../../realtime/realtime.gateway";
 import { LeaderboardService } from "../leaderboard/leaderboard.service";
 import { AuditService } from "../audit/audit.service";
-import { VotingConfirmDto, VotingQuoteDto } from './dto/voting.dto';
+import { VotingConfirmDto, VotingQuoteDto, AdminCreditVotesDto } from './dto/voting.dto';
 import { PaymentStatus } from "../../common/constants";
 import { AuthenticatedUser } from "../../common/types";
 export interface QuoteResult {
@@ -17,6 +17,7 @@ export interface QuoteResult {
     platformFee: number;
     totalAmount: number;
     votes: number;
+    pricePerVote: number;
     currency: string;
 }
 export declare class QuoteService {
@@ -63,5 +64,12 @@ export declare class VotingService {
         status: PaymentStatus;
         votesPurchased: number;
         contestantId: string;
+    }>;
+    adminCreditVotes(dto: AdminCreditVotesDto, admin: AuthenticatedUser): Promise<{
+        success: boolean;
+        alreadyCredited: boolean;
+        contestantId: string;
+        votesAdded: number;
+        newVoteTotal: number;
     }>;
 }

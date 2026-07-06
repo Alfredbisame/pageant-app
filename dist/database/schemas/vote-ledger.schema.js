@@ -18,11 +18,14 @@ let VoteLedger = class VoteLedger {
     contestantId;
     votes;
     type;
+    reason;
+    adjustedByUserId;
+    providerReference;
     createdAt;
 };
 exports.VoteLedger = VoteLedger;
 __decorate([
-    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'Payment', required: true, unique: true }),
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'Payment', sparse: true }),
     __metadata("design:type", mongoose_2.Types.ObjectId)
 ], VoteLedger.prototype, "paymentId", void 0);
 __decorate([
@@ -37,6 +40,18 @@ __decorate([
     (0, mongoose_1.Prop)({ type: String, enum: constants_1.VoteLedgerType, default: constants_1.VoteLedgerType.CREDIT }),
     __metadata("design:type", String)
 ], VoteLedger.prototype, "type", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ trim: true }),
+    __metadata("design:type", String)
+], VoteLedger.prototype, "reason", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'User' }),
+    __metadata("design:type", mongoose_2.Types.ObjectId)
+], VoteLedger.prototype, "adjustedByUserId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ trim: true }),
+    __metadata("design:type", String)
+], VoteLedger.prototype, "providerReference", void 0);
 exports.VoteLedger = VoteLedger = __decorate([
     (0, mongoose_1.Schema)({
         timestamps: { createdAt: true, updatedAt: false },
@@ -44,5 +59,6 @@ exports.VoteLedger = VoteLedger = __decorate([
     })
 ], VoteLedger);
 exports.VoteLedgerSchema = mongoose_1.SchemaFactory.createForClass(VoteLedger);
-exports.VoteLedgerSchema.index({ paymentId: 1 }, { unique: true });
+exports.VoteLedgerSchema.index({ paymentId: 1 }, { unique: true, sparse: true });
+exports.VoteLedgerSchema.index({ providerReference: 1 }, { sparse: true });
 //# sourceMappingURL=vote-ledger.schema.js.map

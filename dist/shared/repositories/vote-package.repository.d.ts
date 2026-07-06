@@ -18,4 +18,5 @@ export declare class VotePackageRepository extends BaseRepository<VotePackageDoc
     } & Required<{
         _id: import("mongoose").Types.ObjectId;
     }>)[]>;
+    resolvePricePerVotePaise(fallback: number): Promise<number>;
 }

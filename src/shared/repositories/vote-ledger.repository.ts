@@ -12,4 +12,8 @@ export class VoteLedgerRepository extends BaseRepository<VoteLedgerDocument> {
   constructor(@InjectModel(VoteLedger.name) model: Model<VoteLedgerDocument>) {
     super(model);
   }
+
+  findByProviderReference(providerReference: string) {
+    return this.model.findOne({ providerReference }).exec();
+  }
 }

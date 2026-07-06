@@ -42,7 +42,12 @@ let QuoteService = class QuoteService {
     async calculateQuote(dto) {
         await this.assertVotingOpen();
         await this.assertContestant(dto.contestantId);
+        if (dto.packageId && dto.customAmount) {
+            throw new common_1.BadRequestException('Provide either packageId or customAmount, not both');
+        }
         const eventConfig = await this.eventConfigRepository.getSingleton();
+        const fallbackPrice = this.configService.get('payments.pricePerVotePaise', 100);
+        const pricePerVote = await this.votePackageRepository.resolvePricePerVotePaise(fallbackPrice);
         let baseAmount;
         let votes;
         if (dto.packageId) {
@@ -55,7 +60,9 @@ let QuoteService = class QuoteService {
         }
         else if (dto.customAmount) {
             baseAmount = dto.customAmount;
-            const pricePerVote = this.configService.get('payments.pricePerVotePaise', 100);
+            if (baseAmount < pricePerVote) {
+                throw new common_1.BadRequestException(`Custom amount must be at least ${pricePerVote} pesewas (1 vote)`);
+            }
             votes = Math.floor(baseAmount / pricePerVote);
             if (votes < 1) {
                 throw new common_1.BadRequestException('Custom amount too low for any votes');
@@ -71,6 +78,7 @@ let QuoteService = class QuoteService {
             platformFee,
             totalAmount,
             votes,
+            pricePerVote,
             currency: 'GHS',
         };
     }
@@ -129,6 +137,9 @@ let VotingService = class VotingService {
         return this.quoteService.calculateQuote(dto);
     }
     async confirm(dto, user) {
+        if (dto.packageId && dto.customAmount) {
+            throw new common_1.BadRequestException('Provide either packageId or customAmount, not both');
+        }
         const existing = await this.paymentRepository.findByProviderReference(dto.providerReference);
         if (existing?.status === constants_1.PaymentStatus.SUCCESS) {
             const contestant = await this.contestantRepository.findById(existing.contestantId.toString());
@@ -249,6 +260,82 @@ let VotingService = class VotingService {
             votesPurchased: payment.votesPurchased,
             contestantId: payment.contestantId.toString(),
         };
+    }
+    async adminCreditVotes(dto, admin) {
+        if (dto.providerReference) {
+            const existingPayment = await this.paymentRepository.findByProviderReference(dto.providerReference);
+            if (existingPayment?.status === constants_1.PaymentStatus.SUCCESS) {
+                const contestant = await this.contestantRepository.findById(existingPayment.contestantId.toString());
+                return {
+                    success: true,
+                    alreadyCredited: true,
+                    contestantId: existingPayment.contestantId.toString(),
+                    votesAdded: existingPayment.votesPurchased,
+                    newVoteTotal: contestant?.voteCount ?? 0,
+                };
+            }
+            const existingAdjustment = await this.voteLedgerRepository.findByProviderReference(dto.providerReference);
+            if (existingAdjustment) {
+                const contestant = await this.contestantRepository.findById(existingAdjustment.contestantId.toString());
+                return {
+                    success: true,
+                    alreadyCredited: true,
+                    contestantId: existingAdjustment.contestantId.toString(),
+                    votesAdded: existingAdjustment.votes,
+                    newVoteTotal: contestant?.voteCount ?? 0,
+                };
+            }
+        }
+        const contestant = await this.contestantRepository.findById(dto.contestantId);
+        if (!contestant || !contestant.isActive) {
+            throw new common_1.NotFoundException('Contestant not found');
+        }
+        const session = await this.connection.startSession();
+        session.startTransaction();
+        try {
+            await this.voteLedgerRepository.create({
+                contestantId: new mongoose_2.Types.ObjectId(dto.contestantId),
+                votes: dto.votes,
+                type: constants_1.VoteLedgerType.ADJUSTMENT,
+                reason: dto.reason,
+                adjustedByUserId: new mongoose_2.Types.ObjectId(admin.id),
+                providerReference: dto.providerReference,
+            });
+            const updatedContestant = await this.contestantRepository.incrementVoteCount(dto.contestantId, dto.votes);
+            await session.commitTransaction();
+            await this.auditService.log({
+                actorId: admin.id,
+                action: 'votes.admin_credit',
+                entity: 'contestant',
+                entityId: dto.contestantId,
+                summary: {
+                    votes: dto.votes,
+                    reason: dto.reason,
+                    providerReference: dto.providerReference,
+                },
+            });
+            const leaderboard = await this.leaderboardService.getLeaderboard(50, 0);
+            this.realtimeGateway.emitLeaderboardUpdate(leaderboard);
+            this.realtimeGateway.emitVoteConfirmed({
+                contestantId: dto.contestantId,
+                votesAdded: dto.votes,
+                newTotal: updatedContestant?.voteCount ?? 0,
+            });
+            return {
+                success: true,
+                alreadyCredited: false,
+                contestantId: dto.contestantId,
+                votesAdded: dto.votes,
+                newVoteTotal: updatedContestant?.voteCount ?? 0,
+            };
+        }
+        catch (error) {
+            await session.abortTransaction();
+            throw error;
+        }
+        finally {
+            void session.endSession();
+        }
     }
 };
 exports.VotingService = VotingService;

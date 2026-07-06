@@ -18,4 +18,19 @@ export class VotePackageRepository extends BaseRepository<VotePackageDocument> {
   findActive() {
     return this.model.find({ isActive: true }).sort({ sortOrder: 1 }).exec();
   }
+
+  /**
+   * Derives the per-vote price (pesewas) from active packages.
+   * Uses the highest baseAmount/votes ratio so custom amounts do not
+   * receive bulk-discount rates. Falls back when no packages exist.
+   */
+  async resolvePricePerVotePaise(fallback: number): Promise<number> {
+    const packages = await this.findActive();
+    if (!packages.length) return fallback;
+
+    const maxRate = Math.max(
+      ...packages.map((pkg) => pkg.baseAmount / pkg.votes),
+    );
+    return Math.ceil(maxRate);
+  }
 }

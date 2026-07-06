@@ -15,3 +15,9 @@ export declare class VotingConfirmDto {
     voterEmail: string;
     anonymous?: boolean;
 }
+export declare class AdminCreditVotesDto {
+    contestantId: string;
+    votes: number;
+    reason: string;
+    providerReference?: string;
+}

@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VotingModule = void 0;
 const common_1 = require("@nestjs/common");
 const voting_controller_1 = require("./voting.controller");
+const admin_voting_controller_1 = require("./admin-voting.controller");
 const voting_service_1 = require("./voting.service");
 const payments_module_1 = require("../payments/payments.module");
 const realtime_module_1 = require("../../realtime/realtime.module");
@@ -25,7 +26,7 @@ exports.VotingModule = VotingModule = __decorate([
             (0, common_1.forwardRef)(() => leaderboard_module_1.LeaderboardModule),
             audit_module_1.AuditModule,
         ],
-        controllers: [voting_controller_1.VotingController],
+        controllers: [voting_controller_1.VotingController, admin_voting_controller_1.AdminVotingController],
         providers: [voting_service_1.VotingService, voting_service_1.QuoteService],
         exports: [voting_service_1.VotingService],
     })

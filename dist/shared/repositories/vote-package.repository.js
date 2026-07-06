@@ -25,6 +25,13 @@ let VotePackageRepository = class VotePackageRepository extends base_repository_
     findActive() {
         return this.model.find({ isActive: true }).sort({ sortOrder: 1 }).exec();
     }
+    async resolvePricePerVotePaise(fallback) {
+        const packages = await this.findActive();
+        if (!packages.length)
+            return fallback;
+        const maxRate = Math.max(...packages.map((pkg) => pkg.baseAmount / pkg.votes));
+        return Math.ceil(maxRate);
+    }
 };
 exports.VotePackageRepository = VotePackageRepository;
 exports.VotePackageRepository = VotePackageRepository = __decorate([

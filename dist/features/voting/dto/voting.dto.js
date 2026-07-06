@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.VotingConfirmDto = exports.VotingQuoteDto = void 0;
+exports.AdminCreditVotesDto = exports.VotingConfirmDto = exports.VotingQuoteDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 const constants_1 = require("../../../common/constants");
@@ -36,7 +36,7 @@ __decorate([
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),
-    (0, class_validator_1.Min)(100),
+    (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)
 ], VotingQuoteDto.prototype, "customAmount", void 0);
 class VotingConfirmDto {
@@ -79,11 +79,11 @@ __decorate([
     __metadata("design:type", String)
 ], VotingConfirmDto.prototype, "packageId", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Custom amount in pesewas' }),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),
-    (0, class_validator_1.Min)(100),
+    (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)
 ], VotingConfirmDto.prototype, "customAmount", void 0);
 __decorate([
@@ -103,4 +103,38 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], VotingConfirmDto.prototype, "anonymous", void 0);
+class AdminCreditVotesDto {
+    contestantId;
+    votes;
+    reason;
+    providerReference;
+}
+exports.AdminCreditVotesDto = AdminCreditVotesDto;
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    (0, class_validator_1.IsMongoId)(),
+    __metadata("design:type", String)
+], AdminCreditVotesDto.prototype, "contestantId", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 10 }),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], AdminCreditVotesDto.prototype, "votes", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Payment verified manually after webhook failure' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(5),
+    __metadata("design:type", String)
+], AdminCreditVotesDto.prototype, "reason", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Provider reference to prevent double-crediting an already-settled payment',
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], AdminCreditVotesDto.prototype, "providerReference", void 0);
 //# sourceMappingURL=voting.dto.js.map

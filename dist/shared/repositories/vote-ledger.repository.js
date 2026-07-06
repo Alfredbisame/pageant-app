@@ -22,6 +22,9 @@ let VoteLedgerRepository = class VoteLedgerRepository extends base_repository_1.
     constructor(model) {
         super(model);
     }
+    findByProviderReference(providerReference) {
+        return this.model.findOne({ providerReference }).exec();
+    }
 };
 exports.VoteLedgerRepository = VoteLedgerRepository;
 exports.VoteLedgerRepository = VoteLedgerRepository = __decorate([

@@ -9,8 +9,8 @@ export type VoteLedgerDocument = HydratedDocument<VoteLedger>;
   collection: 'vote_ledger',
 })
 export class VoteLedger {
-  @Prop({ type: Types.ObjectId, ref: 'Payment', required: true, unique: true })
-  paymentId!: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Payment', sparse: true })
+  paymentId?: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Contestant', required: true })
   contestantId!: Types.ObjectId;
@@ -21,8 +21,18 @@ export class VoteLedger {
   @Prop({ type: String, enum: VoteLedgerType, default: VoteLedgerType.CREDIT })
   type!: VoteLedgerType;
 
+  @Prop({ trim: true })
+  reason?: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  adjustedByUserId?: Types.ObjectId;
+
+  @Prop({ trim: true })
+  providerReference?: string;
+
   createdAt!: Date;
 }
 
 export const VoteLedgerSchema = SchemaFactory.createForClass(VoteLedger);
-VoteLedgerSchema.index({ paymentId: 1 }, { unique: true });
+VoteLedgerSchema.index({ paymentId: 1 }, { unique: true, sparse: true });
+VoteLedgerSchema.index({ providerReference: 1 }, { sparse: true });

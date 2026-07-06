@@ -29,7 +29,7 @@ export class VotingQuoteDto {
   @Type(() => Number)
   @IsOptional()
   @IsInt()
-  @Min(100)
+  @Min(1)
   customAmount?: number;
 }
 
@@ -56,11 +56,11 @@ export class VotingConfirmDto {
   @IsMongoId()
   packageId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Custom amount in pesewas' })
   @Type(() => Number)
   @IsOptional()
   @IsInt()
-  @Min(100)
+  @Min(1)
   customAmount?: number;
 
   @ApiProperty()
@@ -76,4 +76,30 @@ export class VotingConfirmDto {
   @IsOptional()
   @IsBoolean()
   anonymous?: boolean;
+}
+
+export class AdminCreditVotesDto {
+  @ApiProperty()
+  @IsMongoId()
+  contestantId!: string;
+
+  @ApiProperty({ example: 10 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  votes!: number;
+
+  @ApiProperty({ example: 'Payment verified manually after webhook failure' })
+  @IsString()
+  @MinLength(5)
+  reason!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Provider reference to prevent double-crediting an already-settled payment',
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  providerReference?: string;
 }
