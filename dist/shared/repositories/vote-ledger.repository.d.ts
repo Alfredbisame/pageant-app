@@ -25,19 +25,5 @@ export declare class VoteLedgerRepository extends BaseRepository<VoteLedgerDocum
     } & Required<{
         _id: Types.ObjectId;
     }>) | null>;
-    findPaginated(query: VoteLedgerListQuery): Promise<[(import("mongoose").Document<unknown, {}, import("mongoose").Document<unknown, {}, VoteLedger, {}, import("mongoose").DefaultSchemaOptions> & VoteLedger & {
-        _id: Types.ObjectId;
-    } & {
-        __v: number;
-    } & {
-        id: string;
-    }, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").Document<unknown, {}, VoteLedger, {}, import("mongoose").DefaultSchemaOptions> & VoteLedger & {
-        _id: Types.ObjectId;
-    } & {
-        __v: number;
-    } & {
-        id: string;
-    } & Required<{
-        _id: Types.ObjectId;
-    }>)[], number]>;
+    findPaginated(query: VoteLedgerListQuery): Promise<[VoteLedgerDocument[], number]>;
 }

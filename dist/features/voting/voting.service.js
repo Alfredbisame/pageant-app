@@ -313,7 +313,7 @@ let VotingService = class VotingService {
     }
     async getAdminTransactions(query) {
         const { page, limit } = (0, pagination_1.getPagination)(query);
-        const [payments, total] = (await this.paymentRepository.findPaginated(query));
+        const [payments, total] = await this.paymentRepository.findPaginated(query);
         return {
             data: payments.map((p) => this.toAdminTransaction(p)),
             meta: (0, pagination_1.buildPaginationMeta)(total, page, limit),
@@ -321,7 +321,7 @@ let VotingService = class VotingService {
     }
     async getAdminVoteHistory(query) {
         const { page, limit } = (0, pagination_1.getPagination)(query);
-        const [entries, total] = (await this.voteLedgerRepository.findPaginated(query));
+        const [entries, total] = await this.voteLedgerRepository.findPaginated(query);
         return {
             data: entries.map((e) => this.toAdminVoteHistory(e)),
             meta: (0, pagination_1.buildPaginationMeta)(total, page, limit),

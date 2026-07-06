@@ -45,8 +45,10 @@ export class PaymentRepository extends BaseRepository<PaymentDocument> {
     });
   }
 
-  findPaginated(query: PaymentListQuery) {
-    const { page, limit, skip } = getPagination(query);
+  async findPaginated(
+    query: PaymentListQuery,
+  ): Promise<[PaymentDocument[], number]> {
+    const { limit, skip } = getPagination(query);
     const filter: Record<string, unknown> = {};
 
     if (query.contestantId) {
@@ -62,7 +64,7 @@ export class PaymentRepository extends BaseRepository<PaymentDocument> {
       filter.provider = query.provider;
     }
 
-    return Promise.all([
+    const [payments, total] = await Promise.all([
       this.model
         .find(filter)
         .sort({ createdAt: -1 })
@@ -73,5 +75,7 @@ export class PaymentRepository extends BaseRepository<PaymentDocument> {
         .exec(),
       this.model.countDocuments(filter).exec(),
     ]);
+
+    return [payments, total];
   }
 }

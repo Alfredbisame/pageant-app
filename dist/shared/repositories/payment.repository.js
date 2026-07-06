@@ -44,8 +44,8 @@ let PaymentRepository = class PaymentRepository extends base_repository_1.BaseRe
             createdAt: { $gte: startOfDay },
         });
     }
-    findPaginated(query) {
-        const { page, limit, skip } = (0, pagination_1.getPagination)(query);
+    async findPaginated(query) {
+        const { limit, skip } = (0, pagination_1.getPagination)(query);
         const filter = {};
         if (query.contestantId) {
             filter.contestantId = new mongoose_2.Types.ObjectId(query.contestantId);
@@ -59,7 +59,7 @@ let PaymentRepository = class PaymentRepository extends base_repository_1.BaseRe
         if (query.provider) {
             filter.provider = query.provider;
         }
-        return Promise.all([
+        const [payments, total] = await Promise.all([
             this.model
                 .find(filter)
                 .sort({ createdAt: -1 })
@@ -70,6 +70,7 @@ let PaymentRepository = class PaymentRepository extends base_repository_1.BaseRe
                 .exec(),
             this.model.countDocuments(filter).exec(),
         ]);
+        return [payments, total];
     }
 };
 exports.PaymentRepository = PaymentRepository;

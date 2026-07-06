@@ -7,6 +7,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection, Types } from 'mongoose';
+import { PaymentDocument } from '@/database/schemas/payment.schema';
+import { VoteLedgerDocument } from '@/database/schemas/vote-ledger.schema';
 import { ContestantRepository } from '@/shared/repositories/contestant.repository';
 import { VotePackageRepository } from '@/shared/repositories/vote-package.repository';
 import { EventConfigRepository } from '@/shared/repositories/event-config.repository';
@@ -53,39 +55,6 @@ interface PopulatedUser {
   _id: Types.ObjectId;
   fullName: string;
   email: string;
-}
-
-interface AdminTransactionRow {
-  _id: { toString(): string };
-  reference: string;
-  providerReference: string;
-  provider: string;
-  status: string;
-  baseAmount: number;
-  platformFee: number;
-  totalAmount: number;
-  currency: string;
-  votesPurchased: number;
-  voterName: string;
-  voterEmail: string;
-  anonymous: boolean;
-  customAmount?: number;
-  verifiedAt?: Date;
-  createdAt: Date;
-  contestantId: PopulatedContestant | Types.ObjectId;
-  packageId?: PopulatedPackage | Types.ObjectId;
-}
-
-interface AdminVoteHistoryRow {
-  _id: { toString(): string };
-  votes: number;
-  type: VoteLedgerType;
-  reason?: string;
-  providerReference?: string;
-  createdAt: Date;
-  contestantId: PopulatedContestant | Types.ObjectId;
-  paymentId?: PopulatedPayment | Types.ObjectId;
-  adjustedByUserId?: PopulatedUser | Types.ObjectId;
 }
 
 function mapPopulatedContestant(value: PopulatedContestant | Types.ObjectId) {
@@ -411,9 +380,7 @@ export class VotingService {
 
   async getAdminTransactions(query: PaymentListQuery) {
     const { page, limit } = getPagination(query);
-    const [payments, total] = (await this.paymentRepository.findPaginated(
-      query,
-    )) as [AdminTransactionRow[], number];
+    const [payments, total] = await this.paymentRepository.findPaginated(query);
 
     return {
       data: payments.map((p) => this.toAdminTransaction(p)),
@@ -423,9 +390,8 @@ export class VotingService {
 
   async getAdminVoteHistory(query: VoteLedgerListQuery) {
     const { page, limit } = getPagination(query);
-    const [entries, total] = (await this.voteLedgerRepository.findPaginated(
-      query,
-    )) as [AdminVoteHistoryRow[], number];
+    const [entries, total] =
+      await this.voteLedgerRepository.findPaginated(query);
 
     return {
       data: entries.map((e) => this.toAdminVoteHistory(e)),
@@ -433,26 +399,7 @@ export class VotingService {
     };
   }
 
-  private toAdminTransaction(payment: {
-    _id: { toString(): string };
-    reference: string;
-    providerReference: string;
-    provider: string;
-    status: string;
-    baseAmount: number;
-    platformFee: number;
-    totalAmount: number;
-    currency: string;
-    votesPurchased: number;
-    voterName: string;
-    voterEmail: string;
-    anonymous: boolean;
-    customAmount?: number;
-    verifiedAt?: Date;
-    createdAt: Date;
-    contestantId: PopulatedContestant | Types.ObjectId;
-    packageId?: PopulatedPackage | Types.ObjectId;
-  }) {
+  private toAdminTransaction(payment: PaymentDocument) {
     return {
       id: payment._id.toString(),
       reference: payment.reference,
@@ -475,17 +422,7 @@ export class VotingService {
     };
   }
 
-  private toAdminVoteHistory(entry: {
-    _id: { toString(): string };
-    votes: number;
-    type: VoteLedgerType;
-    reason?: string;
-    providerReference?: string;
-    createdAt: Date;
-    contestantId: PopulatedContestant | Types.ObjectId;
-    paymentId?: PopulatedPayment | Types.ObjectId;
-    adjustedByUserId?: PopulatedUser | Types.ObjectId;
-  }) {
+  private toAdminVoteHistory(entry: VoteLedgerDocument) {
     return {
       id: entry._id.toString(),
       votes: entry.votes,

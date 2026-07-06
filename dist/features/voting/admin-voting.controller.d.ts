@@ -9,8 +9,8 @@ export declare class AdminVotingController {
             id: string;
             reference: string;
             providerReference: string;
-            provider: string;
-            status: string;
+            provider: import("@/common/constants").PaymentProvider;
+            status: import("@/common/constants").PaymentStatus;
             baseAmount: number;
             platformFee: number;
             totalAmount: number;

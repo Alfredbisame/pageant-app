@@ -26,8 +26,10 @@ export class VoteLedgerRepository extends BaseRepository<VoteLedgerDocument> {
     return this.model.findOne({ providerReference }).exec();
   }
 
-  findPaginated(query: VoteLedgerListQuery) {
-    const { page, limit, skip } = getPagination(query);
+  async findPaginated(
+    query: VoteLedgerListQuery,
+  ): Promise<[VoteLedgerDocument[], number]> {
+    const { limit, skip } = getPagination(query);
     const filter: Record<string, unknown> = {};
 
     if (query.contestantId) {
@@ -37,7 +39,7 @@ export class VoteLedgerRepository extends BaseRepository<VoteLedgerDocument> {
       filter.type = query.type;
     }
 
-    return Promise.all([
+    const [entries, total] = await Promise.all([
       this.model
         .find(filter)
         .sort({ createdAt: -1 })
@@ -49,5 +51,7 @@ export class VoteLedgerRepository extends BaseRepository<VoteLedgerDocument> {
         .exec(),
       this.model.countDocuments(filter).exec(),
     ]);
+
+    return [entries, total];
   }
 }

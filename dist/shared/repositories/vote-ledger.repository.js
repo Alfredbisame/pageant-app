@@ -26,8 +26,8 @@ let VoteLedgerRepository = class VoteLedgerRepository extends base_repository_1.
     findByProviderReference(providerReference) {
         return this.model.findOne({ providerReference }).exec();
     }
-    findPaginated(query) {
-        const { page, limit, skip } = (0, pagination_1.getPagination)(query);
+    async findPaginated(query) {
+        const { limit, skip } = (0, pagination_1.getPagination)(query);
         const filter = {};
         if (query.contestantId) {
             filter.contestantId = new mongoose_2.Types.ObjectId(query.contestantId);
@@ -35,7 +35,7 @@ let VoteLedgerRepository = class VoteLedgerRepository extends base_repository_1.
         if (query.type) {
             filter.type = query.type;
         }
-        return Promise.all([
+        const [entries, total] = await Promise.all([
             this.model
                 .find(filter)
                 .sort({ createdAt: -1 })
@@ -47,6 +47,7 @@ let VoteLedgerRepository = class VoteLedgerRepository extends base_repository_1.
                 .exec(),
             this.model.countDocuments(filter).exec(),
         ]);
+        return [entries, total];
     }
 };
 exports.VoteLedgerRepository = VoteLedgerRepository;

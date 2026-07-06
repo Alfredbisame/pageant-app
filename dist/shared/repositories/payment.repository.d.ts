@@ -78,19 +78,5 @@ export declare class PaymentRepository extends BaseRepository<PaymentDocument> {
     } & {
         id: string;
     }, "countDocuments", {}>;
-    findPaginated(query: PaymentListQuery): Promise<[(import("mongoose").Document<unknown, {}, import("mongoose").Document<unknown, {}, Payment, {}, import("mongoose").DefaultSchemaOptions> & Payment & {
-        _id: Types.ObjectId;
-    } & {
-        __v: number;
-    } & {
-        id: string;
-    }, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").Document<unknown, {}, Payment, {}, import("mongoose").DefaultSchemaOptions> & Payment & {
-        _id: Types.ObjectId;
-    } & {
-        __v: number;
-    } & {
-        id: string;
-    } & Required<{
-        _id: Types.ObjectId;
-    }>)[], number]>;
+    findPaginated(query: PaymentListQuery): Promise<[PaymentDocument[], number]>;
 }

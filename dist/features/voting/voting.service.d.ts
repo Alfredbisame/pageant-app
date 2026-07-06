@@ -72,8 +72,8 @@ export declare class VotingService {
             id: string;
             reference: string;
             providerReference: string;
-            provider: string;
-            status: string;
+            provider: import("@/common/constants").PaymentProvider;
+            status: PaymentStatus;
             baseAmount: number;
             platformFee: number;
             totalAmount: number;
