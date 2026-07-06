@@ -6,7 +6,7 @@ export declare class Contestant {
     slug: string;
     displayName: string;
     bio?: string;
-    level: ContestantLevel;
+    level?: ContestantLevel;
     avatarUrl: string;
     voteCount: number;
     isActive: boolean;
@@ -59,7 +59,7 @@ export declare const ContestantSchema: import("mongoose").Schema<Contestant, imp
     }, "id"> & {
         id: string;
     }> | undefined;
-    level?: import("mongoose").SchemaDefinitionProperty<ContestantLevel, Contestant, import("mongoose").Document<unknown, {}, Contestant, {
+    level?: import("mongoose").SchemaDefinitionProperty<ContestantLevel | undefined, Contestant, import("mongoose").Document<unknown, {}, Contestant, {
         id: string;
     }, import("mongoose").DefaultSchemaOptions> & Omit<Contestant & {
         _id: Types.ObjectId;

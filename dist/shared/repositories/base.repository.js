@@ -19,7 +19,9 @@ class BaseRepository {
         return this.model.create(data);
     }
     async updateById(id, data) {
-        return this.model.findByIdAndUpdate(id, data, { new: true }).exec();
+        return this.model
+            .findByIdAndUpdate(id, data, { returnDocument: 'after' })
+            .exec();
     }
     async deleteById(id) {
         return this.model.findByIdAndDelete(id).exec();

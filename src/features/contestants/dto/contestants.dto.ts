@@ -24,9 +24,10 @@ export class CreateContestantDto {
   @Min(1)
   entryNumber!: number;
 
-  @ApiProperty({ enum: ContestantLevel })
+  @ApiPropertyOptional({ enum: ContestantLevel })
+  @IsOptional()
   @IsEnum(ContestantLevel)
-  level!: ContestantLevel;
+  level?: ContestantLevel;
 
   @ApiPropertyOptional()
   @IsOptional()

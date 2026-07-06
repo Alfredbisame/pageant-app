@@ -19,6 +19,7 @@ const mongoose_2 = require("mongoose");
 const constants_1 = require("../../common/constants");
 const payment_schema_1 = require("../../database/schemas/payment.schema");
 const base_repository_1 = require("./base.repository");
+const pagination_1 = require("../../common/utils/pagination");
 let PaymentRepository = class PaymentRepository extends base_repository_1.BaseRepository {
     constructor(model) {
         super(model);
@@ -42,6 +43,33 @@ let PaymentRepository = class PaymentRepository extends base_repository_1.BaseRe
             status: constants_1.PaymentStatus.SUCCESS,
             createdAt: { $gte: startOfDay },
         });
+    }
+    findPaginated(query) {
+        const { page, limit, skip } = (0, pagination_1.getPagination)(query);
+        const filter = {};
+        if (query.contestantId) {
+            filter.contestantId = new mongoose_2.Types.ObjectId(query.contestantId);
+        }
+        if (query.status) {
+            filter.status = query.status;
+        }
+        if (query.voterEmail) {
+            filter.voterEmail = query.voterEmail.toLowerCase();
+        }
+        if (query.provider) {
+            filter.provider = query.provider;
+        }
+        return Promise.all([
+            this.model
+                .find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate('contestantId', 'displayName entryNumber')
+                .populate('packageId', 'name votes baseAmount')
+                .exec(),
+            this.model.countDocuments(filter).exec(),
+        ]);
     }
 };
 exports.PaymentRepository = PaymentRepository;

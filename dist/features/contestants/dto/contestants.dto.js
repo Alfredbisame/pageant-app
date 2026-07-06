@@ -38,7 +38,8 @@ __decorate([
     __metadata("design:type", Number)
 ], CreateContestantDto.prototype, "entryNumber", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ enum: constants_1.ContestantLevel }),
+    (0, swagger_1.ApiPropertyOptional)({ enum: constants_1.ContestantLevel }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(constants_1.ContestantLevel),
     __metadata("design:type", String)
 ], CreateContestantDto.prototype, "level", void 0);

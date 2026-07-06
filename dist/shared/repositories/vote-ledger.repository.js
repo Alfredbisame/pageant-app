@@ -18,12 +18,35 @@ const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const vote_ledger_schema_1 = require("../../database/schemas/vote-ledger.schema");
 const base_repository_1 = require("./base.repository");
+const pagination_1 = require("../../common/utils/pagination");
 let VoteLedgerRepository = class VoteLedgerRepository extends base_repository_1.BaseRepository {
     constructor(model) {
         super(model);
     }
     findByProviderReference(providerReference) {
         return this.model.findOne({ providerReference }).exec();
+    }
+    findPaginated(query) {
+        const { page, limit, skip } = (0, pagination_1.getPagination)(query);
+        const filter = {};
+        if (query.contestantId) {
+            filter.contestantId = new mongoose_2.Types.ObjectId(query.contestantId);
+        }
+        if (query.type) {
+            filter.type = query.type;
+        }
+        return Promise.all([
+            this.model
+                .find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate('contestantId', 'displayName entryNumber')
+                .populate('paymentId', 'reference providerReference status totalAmount')
+                .populate('adjustedByUserId', 'fullName email')
+                .exec(),
+            this.model.countDocuments(filter).exec(),
+        ]);
     }
 };
 exports.VoteLedgerRepository = VoteLedgerRepository;

@@ -9,7 +9,7 @@ export declare class ContestantsController {
             name: string;
             displayName: string;
             entryNumber: number;
-            level: string;
+            level: string | undefined;
             bio: string | undefined;
             image: string;
             avatarUrl: string;
@@ -28,7 +28,7 @@ export declare class ContestantsController {
         name: string;
         displayName: string;
         entryNumber: number;
-        level: string;
+        level: string | undefined;
         bio: string | undefined;
         image: string;
         avatarUrl: string;

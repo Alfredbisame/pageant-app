@@ -1,4 +1,4 @@
-import { PaymentProvider } from "../../../common/constants";
+import { PaymentProvider, PaymentStatus, VoteLedgerType } from "../../../common/constants";
 export declare class VotingQuoteDto {
     contestantId: string;
     packageId?: string;
@@ -20,4 +20,18 @@ export declare class AdminCreditVotesDto {
     votes: number;
     reason: string;
     providerReference?: string;
+}
+export declare class AdminTransactionQueryDto {
+    page?: number;
+    limit?: number;
+    contestantId?: string;
+    status?: PaymentStatus;
+    voterEmail?: string;
+    provider?: PaymentProvider;
+}
+export declare class AdminVoteHistoryQueryDto {
+    page?: number;
+    limit?: number;
+    contestantId?: string;
+    type?: VoteLedgerType;
 }

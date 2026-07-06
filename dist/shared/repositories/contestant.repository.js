@@ -46,7 +46,7 @@ let ContestantRepository = class ContestantRepository extends base_repository_1.
     }
     incrementVoteCount(id, votes) {
         return this.model
-            .findByIdAndUpdate(id, { $inc: { voteCount: votes } }, { new: true })
+            .findByIdAndUpdate(id, { $inc: { voteCount: votes } }, { returnDocument: 'after' })
             .exec();
     }
     findLeaderboard(limit, offset = 0) {

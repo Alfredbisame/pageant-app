@@ -8,7 +8,7 @@ export declare class LeaderboardService {
             id: string;
             name: string;
             entryNumber: number;
-            level: import("../../common/constants").ContestantLevel;
+            level: import("../../common/constants").ContestantLevel | undefined;
             votes: number;
             image: string;
         }[];
@@ -17,7 +17,7 @@ export declare class LeaderboardService {
             id: string;
             name: string;
             entryNumber: number;
-            level: import("../../common/constants").ContestantLevel;
+            level: import("../../common/constants").ContestantLevel | undefined;
             votes: number;
             image: string;
         }[];
@@ -28,7 +28,7 @@ export declare class LeaderboardService {
         id: string;
         name: string;
         entryNumber: number;
-        level: import("../../common/constants").ContestantLevel;
+        level: import("../../common/constants").ContestantLevel | undefined;
         votes: number;
         image: string;
     }[]>;

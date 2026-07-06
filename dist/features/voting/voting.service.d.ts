@@ -5,12 +5,14 @@ import { VotePackageRepository } from "../../shared/repositories/vote-package.re
 import { EventConfigRepository } from "../../shared/repositories/event-config.repository";
 import { PaymentRepository } from "../../shared/repositories/payment.repository";
 import { VoteLedgerRepository } from "../../shared/repositories/vote-ledger.repository";
+import type { PaymentListQuery } from "../../shared/repositories/payment.repository";
+import type { VoteLedgerListQuery } from "../../shared/repositories/vote-ledger.repository";
 import { PaymentVerificationService } from "../payments/payment-verification.service";
 import { RealtimeGateway } from "../../realtime/realtime.gateway";
 import { LeaderboardService } from "../leaderboard/leaderboard.service";
 import { AuditService } from "../audit/audit.service";
 import { VotingConfirmDto, VotingQuoteDto, AdminCreditVotesDto } from './dto/voting.dto';
-import { PaymentStatus } from "../../common/constants";
+import { PaymentStatus, VoteLedgerType } from "../../common/constants";
 import { AuthenticatedUser } from "../../common/types";
 export interface QuoteResult {
     baseAmount: number;
@@ -65,6 +67,101 @@ export declare class VotingService {
         votesPurchased: number;
         contestantId: string;
     }>;
+    getAdminTransactions(query: PaymentListQuery): Promise<{
+        data: {
+            id: string;
+            reference: string;
+            providerReference: string;
+            provider: string;
+            status: string;
+            baseAmount: number;
+            platformFee: number;
+            totalAmount: number;
+            currency: string;
+            votesPurchased: number;
+            customAmount: number | undefined;
+            voterName: string | undefined;
+            voterEmail: string | undefined;
+            anonymous: boolean;
+            contestant: {
+                id: string;
+                displayName?: undefined;
+                entryNumber?: undefined;
+            } | {
+                id: string;
+                displayName: string;
+                entryNumber: number;
+            };
+            package: {
+                id: string;
+                name?: undefined;
+                votes?: undefined;
+                baseAmount?: undefined;
+            } | {
+                id: string;
+                name: string;
+                votes: number;
+                baseAmount: number;
+            } | undefined;
+            verifiedAt: Date | undefined;
+            createdAt: Date;
+        }[];
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
+    }>;
+    getAdminVoteHistory(query: VoteLedgerListQuery): Promise<{
+        data: {
+            id: string;
+            votes: number;
+            type: VoteLedgerType;
+            reason: string | undefined;
+            providerReference: string | undefined;
+            contestant: {
+                id: string;
+                displayName?: undefined;
+                entryNumber?: undefined;
+            } | {
+                id: string;
+                displayName: string;
+                entryNumber: number;
+            };
+            payment: {
+                id: string;
+                reference?: undefined;
+                providerReference?: undefined;
+                status?: undefined;
+                totalAmount?: undefined;
+            } | {
+                id: string;
+                reference: string;
+                providerReference: string;
+                status: string;
+                totalAmount: number;
+            } | undefined;
+            adjustedBy: {
+                id: string;
+                fullName?: undefined;
+                email?: undefined;
+            } | {
+                id: string;
+                fullName: string;
+                email: string;
+            } | undefined;
+            createdAt: Date;
+        }[];
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
+    }>;
+    private toAdminTransaction;
+    private toAdminVoteHistory;
     adminCreditVotes(dto: AdminCreditVotesDto, admin: AuthenticatedUser): Promise<{
         success: boolean;
         alreadyCredited: boolean;

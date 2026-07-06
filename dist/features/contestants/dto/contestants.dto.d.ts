@@ -2,7 +2,7 @@ import { ContestantLevel } from "../../../common/constants";
 export declare class CreateContestantDto {
     displayName: string;
     entryNumber: number;
-    level: ContestantLevel;
+    level?: ContestantLevel;
     bio?: string;
     imageUrl?: string;
     avatarUrl?: unknown;

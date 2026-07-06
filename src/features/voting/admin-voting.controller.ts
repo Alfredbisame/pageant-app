@@ -1,12 +1,25 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Query,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
 import { VotingService } from './voting.service';
-import { AdminCreditVotesDto } from './dto/voting.dto';
+import {
+  AdminCreditVotesDto,
+  AdminTransactionQueryDto,
+  AdminVoteHistoryQueryDto,
+} from './dto/voting.dto';
 import { CurrentUser, Roles } from '@/common/decorators';
 import { UserRole } from '@/common/constants';
 import type { AuthenticatedUser } from '@/common/types';
@@ -17,6 +30,22 @@ import type { AuthenticatedUser } from '@/common/types';
 @Controller('admin/voting')
 export class AdminVotingController {
   constructor(private readonly votingService: VotingService) {}
+
+  @Get('transactions')
+  @ApiOkResponse({ description: 'Paginated payment transaction history' })
+  @ApiOperation({ summary: 'List all payment transactions' })
+  listTransactions(@Query() query: AdminTransactionQueryDto) {
+    return this.votingService.getAdminTransactions(query);
+  }
+
+  @Get('history')
+  @ApiOkResponse({
+    description: 'Paginated vote credit and adjustment history',
+  })
+  @ApiOperation({ summary: 'List all vote ledger entries' })
+  listVoteHistory(@Query() query: AdminVoteHistoryQueryDto) {
+    return this.votingService.getAdminVoteHistory(query);
+  }
 
   @Post('credit')
   @HttpCode(HttpStatus.CREATED)

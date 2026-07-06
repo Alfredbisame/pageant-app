@@ -58,7 +58,11 @@ export class ContestantRepository extends BaseRepository<ContestantDocument> {
 
   incrementVoteCount(id: string, votes: number) {
     return this.model
-      .findByIdAndUpdate(id, { $inc: { voteCount: votes } }, { new: true })
+      .findByIdAndUpdate(
+        id,
+        { $inc: { voteCount: votes } },
+        { returnDocument: 'after' },
+      )
       .exec();
   }
 

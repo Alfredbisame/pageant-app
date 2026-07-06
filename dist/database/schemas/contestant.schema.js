@@ -44,7 +44,7 @@ __decorate([
     __metadata("design:type", String)
 ], Contestant.prototype, "bio", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ type: String, enum: constants_1.ContestantLevel, required: true }),
+    (0, mongoose_1.Prop)({ type: String, enum: constants_1.ContestantLevel }),
     __metadata("design:type", String)
 ], Contestant.prototype, "level", void 0);
 __decorate([

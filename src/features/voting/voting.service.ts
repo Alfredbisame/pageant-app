@@ -12,6 +12,8 @@ import { VotePackageRepository } from '@/shared/repositories/vote-package.reposi
 import { EventConfigRepository } from '@/shared/repositories/event-config.repository';
 import { PaymentRepository } from '@/shared/repositories/payment.repository';
 import { VoteLedgerRepository } from '@/shared/repositories/vote-ledger.repository';
+import type { PaymentListQuery } from '@/shared/repositories/payment.repository';
+import type { VoteLedgerListQuery } from '@/shared/repositories/vote-ledger.repository';
 import { PaymentVerificationService } from '@/features/payments/payment-verification.service';
 import { RealtimeGateway } from '@/realtime/realtime.gateway';
 import { LeaderboardService } from '@/features/leaderboard/leaderboard.service';
@@ -23,7 +25,118 @@ import {
 } from './dto/voting.dto';
 import { PaymentStatus, VoteLedgerType } from '@/common/constants';
 import { generateReference } from '@/common/utils/helpers';
+import { buildPaginationMeta, getPagination } from '@/common/utils/pagination';
 import { AuthenticatedUser } from '@/common/types';
+
+interface PopulatedContestant {
+  _id: Types.ObjectId;
+  displayName: string;
+  entryNumber: number;
+}
+
+interface PopulatedPackage {
+  _id: Types.ObjectId;
+  name: string;
+  votes: number;
+  baseAmount: number;
+}
+
+interface PopulatedPayment {
+  _id: Types.ObjectId;
+  reference: string;
+  providerReference: string;
+  status: string;
+  totalAmount: number;
+}
+
+interface PopulatedUser {
+  _id: Types.ObjectId;
+  fullName: string;
+  email: string;
+}
+
+interface AdminTransactionRow {
+  _id: { toString(): string };
+  reference: string;
+  providerReference: string;
+  provider: string;
+  status: string;
+  baseAmount: number;
+  platformFee: number;
+  totalAmount: number;
+  currency: string;
+  votesPurchased: number;
+  voterName: string;
+  voterEmail: string;
+  anonymous: boolean;
+  customAmount?: number;
+  verifiedAt?: Date;
+  createdAt: Date;
+  contestantId: PopulatedContestant | Types.ObjectId;
+  packageId?: PopulatedPackage | Types.ObjectId;
+}
+
+interface AdminVoteHistoryRow {
+  _id: { toString(): string };
+  votes: number;
+  type: VoteLedgerType;
+  reason?: string;
+  providerReference?: string;
+  createdAt: Date;
+  contestantId: PopulatedContestant | Types.ObjectId;
+  paymentId?: PopulatedPayment | Types.ObjectId;
+  adjustedByUserId?: PopulatedUser | Types.ObjectId;
+}
+
+function mapPopulatedContestant(value: PopulatedContestant | Types.ObjectId) {
+  if (value instanceof Types.ObjectId) {
+    return { id: value.toString() };
+  }
+  return {
+    id: value._id.toString(),
+    displayName: value.displayName,
+    entryNumber: value.entryNumber,
+  };
+}
+
+function mapPopulatedPackage(value?: PopulatedPackage | Types.ObjectId) {
+  if (!value) return undefined;
+  if (value instanceof Types.ObjectId) {
+    return { id: value.toString() };
+  }
+  return {
+    id: value._id.toString(),
+    name: value.name,
+    votes: value.votes,
+    baseAmount: value.baseAmount,
+  };
+}
+
+function mapPopulatedPayment(value?: PopulatedPayment | Types.ObjectId) {
+  if (!value) return undefined;
+  if (value instanceof Types.ObjectId) {
+    return { id: value.toString() };
+  }
+  return {
+    id: value._id.toString(),
+    reference: value.reference,
+    providerReference: value.providerReference,
+    status: value.status,
+    totalAmount: value.totalAmount,
+  };
+}
+
+function mapPopulatedUser(value?: PopulatedUser | Types.ObjectId) {
+  if (!value) return undefined;
+  if (value instanceof Types.ObjectId) {
+    return { id: value.toString() };
+  }
+  return {
+    id: value._id.toString(),
+    fullName: value.fullName,
+    email: value.email,
+  };
+}
 
 export interface QuoteResult {
   baseAmount: number;
@@ -293,6 +406,96 @@ export class VotingService {
       status: payment.status,
       votesPurchased: payment.votesPurchased,
       contestantId: payment.contestantId.toString(),
+    };
+  }
+
+  async getAdminTransactions(query: PaymentListQuery) {
+    const { page, limit } = getPagination(query);
+    const [payments, total] = (await this.paymentRepository.findPaginated(
+      query,
+    )) as [AdminTransactionRow[], number];
+
+    return {
+      data: payments.map((p) => this.toAdminTransaction(p)),
+      meta: buildPaginationMeta(total, page, limit),
+    };
+  }
+
+  async getAdminVoteHistory(query: VoteLedgerListQuery) {
+    const { page, limit } = getPagination(query);
+    const [entries, total] = (await this.voteLedgerRepository.findPaginated(
+      query,
+    )) as [AdminVoteHistoryRow[], number];
+
+    return {
+      data: entries.map((e) => this.toAdminVoteHistory(e)),
+      meta: buildPaginationMeta(total, page, limit),
+    };
+  }
+
+  private toAdminTransaction(payment: {
+    _id: { toString(): string };
+    reference: string;
+    providerReference: string;
+    provider: string;
+    status: string;
+    baseAmount: number;
+    platformFee: number;
+    totalAmount: number;
+    currency: string;
+    votesPurchased: number;
+    voterName: string;
+    voterEmail: string;
+    anonymous: boolean;
+    customAmount?: number;
+    verifiedAt?: Date;
+    createdAt: Date;
+    contestantId: PopulatedContestant | Types.ObjectId;
+    packageId?: PopulatedPackage | Types.ObjectId;
+  }) {
+    return {
+      id: payment._id.toString(),
+      reference: payment.reference,
+      providerReference: payment.providerReference,
+      provider: payment.provider,
+      status: payment.status,
+      baseAmount: payment.baseAmount,
+      platformFee: payment.platformFee,
+      totalAmount: payment.totalAmount,
+      currency: payment.currency,
+      votesPurchased: payment.votesPurchased,
+      customAmount: payment.customAmount,
+      voterName: payment.anonymous ? undefined : payment.voterName,
+      voterEmail: payment.anonymous ? undefined : payment.voterEmail,
+      anonymous: payment.anonymous,
+      contestant: mapPopulatedContestant(payment.contestantId),
+      package: mapPopulatedPackage(payment.packageId),
+      verifiedAt: payment.verifiedAt,
+      createdAt: payment.createdAt,
+    };
+  }
+
+  private toAdminVoteHistory(entry: {
+    _id: { toString(): string };
+    votes: number;
+    type: VoteLedgerType;
+    reason?: string;
+    providerReference?: string;
+    createdAt: Date;
+    contestantId: PopulatedContestant | Types.ObjectId;
+    paymentId?: PopulatedPayment | Types.ObjectId;
+    adjustedByUserId?: PopulatedUser | Types.ObjectId;
+  }) {
+    return {
+      id: entry._id.toString(),
+      votes: entry.votes,
+      type: entry.type,
+      reason: entry.reason,
+      providerReference: entry.providerReference,
+      contestant: mapPopulatedContestant(entry.contestantId),
+      payment: mapPopulatedPayment(entry.paymentId),
+      adjustedBy: mapPopulatedUser(entry.adjustedByUserId),
+      createdAt: entry.createdAt,
     };
   }
 

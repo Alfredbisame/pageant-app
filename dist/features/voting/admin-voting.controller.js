@@ -24,11 +24,37 @@ let AdminVotingController = class AdminVotingController {
     constructor(votingService) {
         this.votingService = votingService;
     }
+    listTransactions(query) {
+        return this.votingService.getAdminTransactions(query);
+    }
+    listVoteHistory(query) {
+        return this.votingService.getAdminVoteHistory(query);
+    }
     creditVotes(dto, admin) {
         return this.votingService.adminCreditVotes(dto, admin);
     }
 };
 exports.AdminVotingController = AdminVotingController;
+__decorate([
+    (0, common_1.Get)('transactions'),
+    (0, swagger_1.ApiOkResponse)({ description: 'Paginated payment transaction history' }),
+    (0, swagger_1.ApiOperation)({ summary: 'List all payment transactions' }),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [voting_dto_1.AdminTransactionQueryDto]),
+    __metadata("design:returntype", void 0)
+], AdminVotingController.prototype, "listTransactions", null);
+__decorate([
+    (0, common_1.Get)('history'),
+    (0, swagger_1.ApiOkResponse)({
+        description: 'Paginated vote credit and adjustment history',
+    }),
+    (0, swagger_1.ApiOperation)({ summary: 'List all vote ledger entries' }),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [voting_dto_1.AdminVoteHistoryQueryDto]),
+    __metadata("design:returntype", void 0)
+], AdminVotingController.prototype, "listVoteHistory", null);
 __decorate([
     (0, common_1.Post)('credit'),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),

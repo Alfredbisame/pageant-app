@@ -12,7 +12,11 @@ import {
   MinLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PaymentProvider } from '@/common/constants';
+import {
+  PaymentProvider,
+  PaymentStatus,
+  VoteLedgerType,
+} from '@/common/constants';
 import { Type } from 'class-transformer';
 
 export class VotingQuoteDto {
@@ -102,4 +106,66 @@ export class AdminCreditVotesDto {
   @IsString()
   @IsNotEmpty()
   providerReference?: string;
+}
+
+export class AdminTransactionQueryDto {
+  @ApiPropertyOptional({ default: 1 })
+  @Type(() => Number)
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @ApiPropertyOptional({ default: 20 })
+  @Type(() => Number)
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  limit?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsMongoId()
+  contestantId?: string;
+
+  @ApiPropertyOptional({ enum: PaymentStatus })
+  @IsOptional()
+  @IsEnum(PaymentStatus)
+  status?: PaymentStatus;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEmail()
+  voterEmail?: string;
+
+  @ApiPropertyOptional({ enum: PaymentProvider })
+  @IsOptional()
+  @IsEnum(PaymentProvider)
+  provider?: PaymentProvider;
+}
+
+export class AdminVoteHistoryQueryDto {
+  @ApiPropertyOptional({ default: 1 })
+  @Type(() => Number)
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @ApiPropertyOptional({ default: 20 })
+  @Type(() => Number)
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  limit?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsMongoId()
+  contestantId?: string;
+
+  @ApiPropertyOptional({ enum: VoteLedgerType })
+  @IsOptional()
+  @IsEnum(VoteLedgerType)
+  type?: VoteLedgerType;
 }

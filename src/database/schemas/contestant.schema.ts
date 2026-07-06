@@ -18,8 +18,8 @@ export class Contestant {
   @Prop()
   bio?: string;
 
-  @Prop({ type: String, enum: ContestantLevel, required: true })
-  level!: ContestantLevel;
+  @Prop({ type: String, enum: ContestantLevel })
+  level?: ContestantLevel;
 
   @Prop({ required: true })
   avatarUrl!: string;

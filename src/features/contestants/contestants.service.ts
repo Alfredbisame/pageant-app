@@ -157,7 +157,7 @@ export class ContestantsService {
     _id: { toString(): string };
     displayName: string;
     entryNumber: number;
-    level: string;
+    level?: string;
     bio?: string;
     avatarUrl: string;
     voteCount: number;

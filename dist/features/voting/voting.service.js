@@ -28,6 +28,56 @@ const leaderboard_service_1 = require("../leaderboard/leaderboard.service");
 const audit_service_1 = require("../audit/audit.service");
 const constants_1 = require("../../common/constants");
 const helpers_1 = require("../../common/utils/helpers");
+const pagination_1 = require("../../common/utils/pagination");
+function mapPopulatedContestant(value) {
+    if (value instanceof mongoose_2.Types.ObjectId) {
+        return { id: value.toString() };
+    }
+    return {
+        id: value._id.toString(),
+        displayName: value.displayName,
+        entryNumber: value.entryNumber,
+    };
+}
+function mapPopulatedPackage(value) {
+    if (!value)
+        return undefined;
+    if (value instanceof mongoose_2.Types.ObjectId) {
+        return { id: value.toString() };
+    }
+    return {
+        id: value._id.toString(),
+        name: value.name,
+        votes: value.votes,
+        baseAmount: value.baseAmount,
+    };
+}
+function mapPopulatedPayment(value) {
+    if (!value)
+        return undefined;
+    if (value instanceof mongoose_2.Types.ObjectId) {
+        return { id: value.toString() };
+    }
+    return {
+        id: value._id.toString(),
+        reference: value.reference,
+        providerReference: value.providerReference,
+        status: value.status,
+        totalAmount: value.totalAmount,
+    };
+}
+function mapPopulatedUser(value) {
+    if (!value)
+        return undefined;
+    if (value instanceof mongoose_2.Types.ObjectId) {
+        return { id: value.toString() };
+    }
+    return {
+        id: value._id.toString(),
+        fullName: value.fullName,
+        email: value.email,
+    };
+}
 let QuoteService = class QuoteService {
     contestantRepository;
     votePackageRepository;
@@ -259,6 +309,57 @@ let VotingService = class VotingService {
             status: payment.status,
             votesPurchased: payment.votesPurchased,
             contestantId: payment.contestantId.toString(),
+        };
+    }
+    async getAdminTransactions(query) {
+        const { page, limit } = (0, pagination_1.getPagination)(query);
+        const [payments, total] = (await this.paymentRepository.findPaginated(query));
+        return {
+            data: payments.map((p) => this.toAdminTransaction(p)),
+            meta: (0, pagination_1.buildPaginationMeta)(total, page, limit),
+        };
+    }
+    async getAdminVoteHistory(query) {
+        const { page, limit } = (0, pagination_1.getPagination)(query);
+        const [entries, total] = (await this.voteLedgerRepository.findPaginated(query));
+        return {
+            data: entries.map((e) => this.toAdminVoteHistory(e)),
+            meta: (0, pagination_1.buildPaginationMeta)(total, page, limit),
+        };
+    }
+    toAdminTransaction(payment) {
+        return {
+            id: payment._id.toString(),
+            reference: payment.reference,
+            providerReference: payment.providerReference,
+            provider: payment.provider,
+            status: payment.status,
+            baseAmount: payment.baseAmount,
+            platformFee: payment.platformFee,
+            totalAmount: payment.totalAmount,
+            currency: payment.currency,
+            votesPurchased: payment.votesPurchased,
+            customAmount: payment.customAmount,
+            voterName: payment.anonymous ? undefined : payment.voterName,
+            voterEmail: payment.anonymous ? undefined : payment.voterEmail,
+            anonymous: payment.anonymous,
+            contestant: mapPopulatedContestant(payment.contestantId),
+            package: mapPopulatedPackage(payment.packageId),
+            verifiedAt: payment.verifiedAt,
+            createdAt: payment.createdAt,
+        };
+    }
+    toAdminVoteHistory(entry) {
+        return {
+            id: entry._id.toString(),
+            votes: entry.votes,
+            type: entry.type,
+            reason: entry.reason,
+            providerReference: entry.providerReference,
+            contestant: mapPopulatedContestant(entry.contestantId),
+            payment: mapPopulatedPayment(entry.paymentId),
+            adjustedBy: mapPopulatedUser(entry.adjustedByUserId),
+            createdAt: entry.createdAt,
         };
     }
     async adminCreditVotes(dto, admin) {
