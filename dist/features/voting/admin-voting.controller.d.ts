@@ -11,8 +11,14 @@ export declare class AdminVotingController {
             providerReference: string;
             provider: import("@/common/constants").PaymentProvider;
             status: import("@/common/constants").PaymentStatus;
+            contestantId: string;
+            contestantName: string | null;
+            amount: number;
+            amountGhs: number;
             baseAmount: number;
+            baseAmountGhs: number;
             platformFee: number;
+            platformFeeGhs: number;
             totalAmount: number;
             currency: string;
             votesPurchased: number;
@@ -22,13 +28,15 @@ export declare class AdminVotingController {
             anonymous: boolean;
             contestant: {
                 id: string;
-                displayName?: undefined;
-                entryNumber?: undefined;
-            } | {
-                id: string;
+                name: string;
                 displayName: string;
                 entryNumber: number;
-            };
+            } | {
+                id: string;
+                name: string | null;
+                displayName: string | null;
+                entryNumber: null;
+            } | null;
             package: {
                 id: string;
                 name?: undefined;
@@ -57,15 +65,19 @@ export declare class AdminVotingController {
             type: import("@/common/constants").VoteLedgerType;
             reason: string | undefined;
             providerReference: string | undefined;
+            contestantId: string;
+            contestantName: string | null;
             contestant: {
                 id: string;
-                displayName?: undefined;
-                entryNumber?: undefined;
-            } | {
-                id: string;
+                name: string;
                 displayName: string;
                 entryNumber: number;
-            };
+            } | {
+                id: string;
+                name: string | null;
+                displayName: string | null;
+                entryNumber: null;
+            } | null;
             payment: {
                 id: string;
                 reference?: undefined;

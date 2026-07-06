@@ -74,8 +74,14 @@ export declare class VotingService {
             providerReference: string;
             provider: import("@/common/constants").PaymentProvider;
             status: PaymentStatus;
+            contestantId: string;
+            contestantName: string | null;
+            amount: number;
+            amountGhs: number;
             baseAmount: number;
+            baseAmountGhs: number;
             platformFee: number;
+            platformFeeGhs: number;
             totalAmount: number;
             currency: string;
             votesPurchased: number;
@@ -85,13 +91,15 @@ export declare class VotingService {
             anonymous: boolean;
             contestant: {
                 id: string;
-                displayName?: undefined;
-                entryNumber?: undefined;
-            } | {
-                id: string;
+                name: string;
                 displayName: string;
                 entryNumber: number;
-            };
+            } | {
+                id: string;
+                name: string | null;
+                displayName: string | null;
+                entryNumber: null;
+            } | null;
             package: {
                 id: string;
                 name?: undefined;
@@ -120,15 +128,19 @@ export declare class VotingService {
             type: VoteLedgerType;
             reason: string | undefined;
             providerReference: string | undefined;
+            contestantId: string;
+            contestantName: string | null;
             contestant: {
                 id: string;
-                displayName?: undefined;
-                entryNumber?: undefined;
-            } | {
-                id: string;
+                name: string;
                 displayName: string;
                 entryNumber: number;
-            };
+            } | {
+                id: string;
+                name: string | null;
+                displayName: string | null;
+                entryNumber: null;
+            } | null;
             payment: {
                 id: string;
                 reference?: undefined;
@@ -160,6 +172,7 @@ export declare class VotingService {
             totalPages: number;
         };
     }>;
+    private resolveContestantNameLookup;
     private toAdminTransaction;
     private toAdminVoteHistory;
     adminCreditVotes(dto: AdminCreditVotesDto, admin: AuthenticatedUser): Promise<{

@@ -57,14 +57,49 @@ interface PopulatedUser {
   email: string;
 }
 
-function mapPopulatedContestant(value: PopulatedContestant | Types.ObjectId) {
-  if (value instanceof Types.ObjectId) {
-    return { id: value.toString() };
+function getDocumentId(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (value instanceof Types.ObjectId) return value.toString();
+  if (typeof value === 'object' && '_id' in value) {
+    const id = value._id;
+    if (id instanceof Types.ObjectId) return id.toString();
+    if (typeof id === 'string') return id;
   }
+  return undefined;
+}
+
+function isPopulatedContestant(value: unknown): value is PopulatedContestant {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    !(value instanceof Types.ObjectId) &&
+    'displayName' in value &&
+    typeof (value as PopulatedContestant).displayName === 'string'
+  );
+}
+
+function mapPopulatedContestant(
+  value: unknown,
+  nameLookup?: Map<string, string>,
+) {
+  if (isPopulatedContestant(value)) {
+    return {
+      id: getDocumentId(value)!,
+      name: value.displayName,
+      displayName: value.displayName,
+      entryNumber: value.entryNumber,
+    };
+  }
+
+  const id = getDocumentId(value);
+  if (!id) return null;
+
+  const displayName = nameLookup?.get(id) ?? null;
   return {
-    id: value._id.toString(),
-    displayName: value.displayName,
-    entryNumber: value.entryNumber,
+    id,
+    name: displayName,
+    displayName,
+    entryNumber: null,
   };
 }
 
@@ -381,9 +416,13 @@ export class VotingService {
   async getAdminTransactions(query: PaymentListQuery) {
     const { page, limit } = getPagination(query);
     const [payments, total] = await this.paymentRepository.findPaginated(query);
+    const contestantNameLookup =
+      await this.resolveContestantNameLookup(payments);
 
     return {
-      data: payments.map((p) => this.toAdminTransaction(p)),
+      data: payments.map((p) =>
+        this.toAdminTransaction(p, contestantNameLookup),
+      ),
       meta: buildPaginationMeta(total, page, limit),
     };
   }
@@ -392,22 +431,69 @@ export class VotingService {
     const { page, limit } = getPagination(query);
     const [entries, total] =
       await this.voteLedgerRepository.findPaginated(query);
+    const contestantNameLookup =
+      await this.resolveContestantNameLookup(entries);
 
     return {
-      data: entries.map((e) => this.toAdminVoteHistory(e)),
+      data: entries.map((e) =>
+        this.toAdminVoteHistory(e, contestantNameLookup),
+      ),
       meta: buildPaginationMeta(total, page, limit),
     };
   }
 
-  private toAdminTransaction(payment: PaymentDocument) {
+  private async resolveContestantNameLookup(
+    rows: Array<{ contestantId: unknown }>,
+  ) {
+    const missingIds = [
+      ...new Set(
+        rows
+          .filter((row) => !isPopulatedContestant(row.contestantId))
+          .map((row) => getDocumentId(row.contestantId))
+          .filter((id): id is string => !!id),
+      ),
+    ];
+
+    const lookup = new Map<string, string>();
+    if (!missingIds.length) return lookup;
+
+    const contestants = await this.contestantRepository.find({
+      _id: { $in: missingIds.map((id) => new Types.ObjectId(id)) },
+    });
+
+    for (const contestant of contestants) {
+      lookup.set(contestant._id.toString(), contestant.displayName);
+    }
+
+    return lookup;
+  }
+
+  private toAdminTransaction(
+    payment: PaymentDocument,
+    contestantNameLookup?: Map<string, string>,
+  ) {
+    const contestant = mapPopulatedContestant(
+      payment.contestantId,
+      contestantNameLookup,
+    );
+    const contestantId =
+      contestant?.id ?? getDocumentId(payment.contestantId) ?? '';
+    const contestantName = contestant?.displayName ?? contestant?.name ?? null;
+
     return {
       id: payment._id.toString(),
       reference: payment.reference,
       providerReference: payment.providerReference,
       provider: payment.provider,
       status: payment.status,
+      contestantId,
+      contestantName,
+      amount: payment.totalAmount,
+      amountGhs: Number((payment.totalAmount / 100).toFixed(2)),
       baseAmount: payment.baseAmount,
+      baseAmountGhs: Number((payment.baseAmount / 100).toFixed(2)),
       platformFee: payment.platformFee,
+      platformFeeGhs: Number((payment.platformFee / 100).toFixed(2)),
       totalAmount: payment.totalAmount,
       currency: payment.currency,
       votesPurchased: payment.votesPurchased,
@@ -415,21 +501,34 @@ export class VotingService {
       voterName: payment.anonymous ? undefined : payment.voterName,
       voterEmail: payment.anonymous ? undefined : payment.voterEmail,
       anonymous: payment.anonymous,
-      contestant: mapPopulatedContestant(payment.contestantId),
+      contestant,
       package: mapPopulatedPackage(payment.packageId),
       verifiedAt: payment.verifiedAt,
       createdAt: payment.createdAt,
     };
   }
 
-  private toAdminVoteHistory(entry: VoteLedgerDocument) {
+  private toAdminVoteHistory(
+    entry: VoteLedgerDocument,
+    contestantNameLookup?: Map<string, string>,
+  ) {
+    const contestant = mapPopulatedContestant(
+      entry.contestantId,
+      contestantNameLookup,
+    );
+    const contestantId =
+      contestant?.id ?? getDocumentId(entry.contestantId) ?? '';
+    const contestantName = contestant?.displayName ?? contestant?.name ?? null;
+
     return {
       id: entry._id.toString(),
       votes: entry.votes,
       type: entry.type,
       reason: entry.reason,
       providerReference: entry.providerReference,
-      contestant: mapPopulatedContestant(entry.contestantId),
+      contestantId,
+      contestantName,
+      contestant,
       payment: mapPopulatedPayment(entry.paymentId),
       adjustedBy: mapPopulatedUser(entry.adjustedByUserId),
       createdAt: entry.createdAt,

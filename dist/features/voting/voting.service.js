@@ -29,14 +29,45 @@ const audit_service_1 = require("../audit/audit.service");
 const constants_1 = require("../../common/constants");
 const helpers_1 = require("../../common/utils/helpers");
 const pagination_1 = require("../../common/utils/pagination");
-function mapPopulatedContestant(value) {
-    if (value instanceof mongoose_2.Types.ObjectId) {
-        return { id: value.toString() };
+function getDocumentId(value) {
+    if (!value)
+        return undefined;
+    if (value instanceof mongoose_2.Types.ObjectId)
+        return value.toString();
+    if (typeof value === 'object' && '_id' in value) {
+        const id = value._id;
+        if (id instanceof mongoose_2.Types.ObjectId)
+            return id.toString();
+        if (typeof id === 'string')
+            return id;
     }
+    return undefined;
+}
+function isPopulatedContestant(value) {
+    return (!!value &&
+        typeof value === 'object' &&
+        !(value instanceof mongoose_2.Types.ObjectId) &&
+        'displayName' in value &&
+        typeof value.displayName === 'string');
+}
+function mapPopulatedContestant(value, nameLookup) {
+    if (isPopulatedContestant(value)) {
+        return {
+            id: getDocumentId(value),
+            name: value.displayName,
+            displayName: value.displayName,
+            entryNumber: value.entryNumber,
+        };
+    }
+    const id = getDocumentId(value);
+    if (!id)
+        return null;
+    const displayName = nameLookup?.get(id) ?? null;
     return {
-        id: value._id.toString(),
-        displayName: value.displayName,
-        entryNumber: value.entryNumber,
+        id,
+        name: displayName,
+        displayName,
+        entryNumber: null,
     };
 }
 function mapPopulatedPackage(value) {
@@ -314,28 +345,57 @@ let VotingService = class VotingService {
     async getAdminTransactions(query) {
         const { page, limit } = (0, pagination_1.getPagination)(query);
         const [payments, total] = await this.paymentRepository.findPaginated(query);
+        const contestantNameLookup = await this.resolveContestantNameLookup(payments);
         return {
-            data: payments.map((p) => this.toAdminTransaction(p)),
+            data: payments.map((p) => this.toAdminTransaction(p, contestantNameLookup)),
             meta: (0, pagination_1.buildPaginationMeta)(total, page, limit),
         };
     }
     async getAdminVoteHistory(query) {
         const { page, limit } = (0, pagination_1.getPagination)(query);
         const [entries, total] = await this.voteLedgerRepository.findPaginated(query);
+        const contestantNameLookup = await this.resolveContestantNameLookup(entries);
         return {
-            data: entries.map((e) => this.toAdminVoteHistory(e)),
+            data: entries.map((e) => this.toAdminVoteHistory(e, contestantNameLookup)),
             meta: (0, pagination_1.buildPaginationMeta)(total, page, limit),
         };
     }
-    toAdminTransaction(payment) {
+    async resolveContestantNameLookup(rows) {
+        const missingIds = [
+            ...new Set(rows
+                .filter((row) => !isPopulatedContestant(row.contestantId))
+                .map((row) => getDocumentId(row.contestantId))
+                .filter((id) => !!id)),
+        ];
+        const lookup = new Map();
+        if (!missingIds.length)
+            return lookup;
+        const contestants = await this.contestantRepository.find({
+            _id: { $in: missingIds.map((id) => new mongoose_2.Types.ObjectId(id)) },
+        });
+        for (const contestant of contestants) {
+            lookup.set(contestant._id.toString(), contestant.displayName);
+        }
+        return lookup;
+    }
+    toAdminTransaction(payment, contestantNameLookup) {
+        const contestant = mapPopulatedContestant(payment.contestantId, contestantNameLookup);
+        const contestantId = contestant?.id ?? getDocumentId(payment.contestantId) ?? '';
+        const contestantName = contestant?.displayName ?? contestant?.name ?? null;
         return {
             id: payment._id.toString(),
             reference: payment.reference,
             providerReference: payment.providerReference,
             provider: payment.provider,
             status: payment.status,
+            contestantId,
+            contestantName,
+            amount: payment.totalAmount,
+            amountGhs: Number((payment.totalAmount / 100).toFixed(2)),
             baseAmount: payment.baseAmount,
+            baseAmountGhs: Number((payment.baseAmount / 100).toFixed(2)),
             platformFee: payment.platformFee,
+            platformFeeGhs: Number((payment.platformFee / 100).toFixed(2)),
             totalAmount: payment.totalAmount,
             currency: payment.currency,
             votesPurchased: payment.votesPurchased,
@@ -343,20 +403,25 @@ let VotingService = class VotingService {
             voterName: payment.anonymous ? undefined : payment.voterName,
             voterEmail: payment.anonymous ? undefined : payment.voterEmail,
             anonymous: payment.anonymous,
-            contestant: mapPopulatedContestant(payment.contestantId),
+            contestant,
             package: mapPopulatedPackage(payment.packageId),
             verifiedAt: payment.verifiedAt,
             createdAt: payment.createdAt,
         };
     }
-    toAdminVoteHistory(entry) {
+    toAdminVoteHistory(entry, contestantNameLookup) {
+        const contestant = mapPopulatedContestant(entry.contestantId, contestantNameLookup);
+        const contestantId = contestant?.id ?? getDocumentId(entry.contestantId) ?? '';
+        const contestantName = contestant?.displayName ?? contestant?.name ?? null;
         return {
             id: entry._id.toString(),
             votes: entry.votes,
             type: entry.type,
             reason: entry.reason,
             providerReference: entry.providerReference,
-            contestant: mapPopulatedContestant(entry.contestantId),
+            contestantId,
+            contestantName,
+            contestant,
             payment: mapPopulatedPayment(entry.paymentId),
             adjustedBy: mapPopulatedUser(entry.adjustedByUserId),
             createdAt: entry.createdAt,
