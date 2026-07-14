@@ -175,11 +175,10 @@ export class QuoteService {
       'payments.pricePerVotePaise',
       100,
     );
-    const pricePerVote =
-      await this.votePackageRepository.resolvePricePerVotePaise(fallbackPrice);
 
     let baseAmount: number;
     let votes: number;
+    let pricePerVote: number;
 
     if (dto.packageId) {
       const pkg = await this.votePackageRepository.findById(dto.packageId);
@@ -188,17 +187,60 @@ export class QuoteService {
       }
       baseAmount = pkg.baseAmount;
       votes = pkg.votes;
+      pricePerVote = Math.ceil(baseAmount / votes);
     } else if (dto.customAmount) {
       baseAmount = dto.customAmount;
-      if (baseAmount < pricePerVote) {
+      const packages = await this.votePackageRepository.findActive();
+
+      if (packages.length > 0) {
+        const sortedPkgs = [...packages].sort((a, b) => a.baseAmount - b.baseAmount);
+
+        // Find lower package (highest baseAmount <= customAmount)
+        const pLower = sortedPkgs.reduce((prev, curr) => {
+          if (curr.baseAmount <= baseAmount) {
+            return curr;
+          }
+          return prev;
+        }, null as typeof packages[0] | null);
+
+        // Find upper package (lowest baseAmount > customAmount)
+        const pUpper = sortedPkgs.find((pkg) => pkg.baseAmount > baseAmount);
+
+        if (pLower && pUpper) {
+          const voteDiff = pUpper.votes - pLower.votes;
+          const amountDiff = pUpper.baseAmount - pLower.baseAmount;
+          votes = Math.floor(
+            pLower.votes + (voteDiff / amountDiff) * (baseAmount - pLower.baseAmount),
+          );
+        } else if (pLower) {
+          // Extrapolate using the rate of the highest package
+          const rate = pLower.votes / pLower.baseAmount;
+          votes = Math.floor(baseAmount * rate);
+        } else if (pUpper) {
+          // Extrapolate using the rate of the smallest package
+          const rate = pUpper.votes / pUpper.baseAmount;
+          votes = Math.floor(baseAmount * rate);
+        } else {
+          const baseRate = await this.votePackageRepository.resolvePricePerVotePaise(fallbackPrice);
+          votes = Math.floor(baseAmount / baseRate);
+        }
+      } else {
+        const baseRate = await this.votePackageRepository.resolvePricePerVotePaise(fallbackPrice);
+        votes = Math.floor(baseAmount / baseRate);
+      }
+
+      if (votes < 1) {
+        const sortedPkgs = [...packages].sort((a, b) => a.baseAmount - b.baseAmount);
+        const minRate = sortedPkgs.length > 0
+          ? (sortedPkgs[0].baseAmount / sortedPkgs[0].votes)
+          : await this.votePackageRepository.resolvePricePerVotePaise(fallbackPrice);
+        const minAmount = Math.ceil(minRate);
         throw new BadRequestException(
-          `Custom amount must be at least ${pricePerVote} pesewas (1 vote)`,
+          `Custom amount must be at least ${minAmount} pesewas (1 vote)`,
         );
       }
-      votes = Math.floor(baseAmount / pricePerVote);
-      if (votes < 1) {
-        throw new BadRequestException('Custom amount too low for any votes');
-      }
+
+      pricePerVote = Math.ceil(baseAmount / votes);
     } else {
       throw new BadRequestException('packageId or customAmount is required');
     }

@@ -128,9 +128,9 @@ let QuoteService = class QuoteService {
         }
         const eventConfig = await this.eventConfigRepository.getSingleton();
         const fallbackPrice = this.configService.get('payments.pricePerVotePaise', 100);
-        const pricePerVote = await this.votePackageRepository.resolvePricePerVotePaise(fallbackPrice);
         let baseAmount;
         let votes;
+        let pricePerVote;
         if (dto.packageId) {
             const pkg = await this.votePackageRepository.findById(dto.packageId);
             if (!pkg || !pkg.isActive) {
@@ -138,16 +138,51 @@ let QuoteService = class QuoteService {
             }
             baseAmount = pkg.baseAmount;
             votes = pkg.votes;
+            pricePerVote = Math.ceil(baseAmount / votes);
         }
         else if (dto.customAmount) {
             baseAmount = dto.customAmount;
-            if (baseAmount < pricePerVote) {
-                throw new common_1.BadRequestException(`Custom amount must be at least ${pricePerVote} pesewas (1 vote)`);
+            const packages = await this.votePackageRepository.findActive();
+            if (packages.length > 0) {
+                const sortedPkgs = [...packages].sort((a, b) => a.baseAmount - b.baseAmount);
+                const pLower = sortedPkgs.reduce((prev, curr) => {
+                    if (curr.baseAmount <= baseAmount) {
+                        return curr;
+                    }
+                    return prev;
+                }, null);
+                const pUpper = sortedPkgs.find((pkg) => pkg.baseAmount > baseAmount);
+                if (pLower && pUpper) {
+                    const voteDiff = pUpper.votes - pLower.votes;
+                    const amountDiff = pUpper.baseAmount - pLower.baseAmount;
+                    votes = Math.floor(pLower.votes + (voteDiff / amountDiff) * (baseAmount - pLower.baseAmount));
+                }
+                else if (pLower) {
+                    const rate = pLower.votes / pLower.baseAmount;
+                    votes = Math.floor(baseAmount * rate);
+                }
+                else if (pUpper) {
+                    const rate = pUpper.votes / pUpper.baseAmount;
+                    votes = Math.floor(baseAmount * rate);
+                }
+                else {
+                    const baseRate = await this.votePackageRepository.resolvePricePerVotePaise(fallbackPrice);
+                    votes = Math.floor(baseAmount / baseRate);
+                }
             }
-            votes = Math.floor(baseAmount / pricePerVote);
+            else {
+                const baseRate = await this.votePackageRepository.resolvePricePerVotePaise(fallbackPrice);
+                votes = Math.floor(baseAmount / baseRate);
+            }
             if (votes < 1) {
-                throw new common_1.BadRequestException('Custom amount too low for any votes');
+                const sortedPkgs = [...packages].sort((a, b) => a.baseAmount - b.baseAmount);
+                const minRate = sortedPkgs.length > 0
+                    ? (sortedPkgs[0].baseAmount / sortedPkgs[0].votes)
+                    : await this.votePackageRepository.resolvePricePerVotePaise(fallbackPrice);
+                const minAmount = Math.ceil(minRate);
+                throw new common_1.BadRequestException(`Custom amount must be at least ${minAmount} pesewas (1 vote)`);
             }
+            pricePerVote = Math.ceil(baseAmount / votes);
         }
         else {
             throw new common_1.BadRequestException('packageId or customAmount is required');
