@@ -138,6 +138,11 @@ export class AdminTransactionQueryDto {
   @IsEmail()
   voterEmail?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @ApiPropertyOptional({ enum: PaymentProvider })
   @IsOptional()
   @IsEnum(PaymentProvider)

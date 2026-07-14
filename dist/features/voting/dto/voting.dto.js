@@ -143,6 +143,7 @@ class AdminTransactionQueryDto {
     contestantId;
     status;
     voterEmail;
+    search;
     provider;
 }
 exports.AdminTransactionQueryDto = AdminTransactionQueryDto;
@@ -180,6 +181,12 @@ __decorate([
     (0, class_validator_1.IsEmail)(),
     __metadata("design:type", String)
 ], AdminTransactionQueryDto.prototype, "voterEmail", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AdminTransactionQueryDto.prototype, "search", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ enum: constants_1.PaymentProvider }),
     (0, class_validator_1.IsOptional)(),

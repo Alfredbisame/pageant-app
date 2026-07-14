@@ -59,6 +59,14 @@ let PaymentRepository = class PaymentRepository extends base_repository_1.BaseRe
         if (query.provider) {
             filter.provider = query.provider;
         }
+        if (query.search) {
+            const searchRegex = new RegExp(query.search.trim(), 'i');
+            filter.$or = [
+                { reference: searchRegex },
+                { providerReference: searchRegex },
+                { voterEmail: searchRegex },
+            ];
+        }
         const [payments, total] = await Promise.all([
             this.model
                 .find(filter)

@@ -9,6 +9,7 @@ export interface PaymentListQuery {
     status?: PaymentStatus;
     voterEmail?: string;
     provider?: PaymentProvider;
+    search?: string;
 }
 export declare class PaymentRepository extends BaseRepository<PaymentDocument> {
     constructor(model: Model<PaymentDocument>);

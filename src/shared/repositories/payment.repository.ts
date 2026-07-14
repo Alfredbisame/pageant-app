@@ -13,6 +13,7 @@ export interface PaymentListQuery {
   status?: PaymentStatus;
   voterEmail?: string;
   provider?: PaymentProvider;
+  search?: string;
 }
 
 @Injectable()
@@ -62,6 +63,14 @@ export class PaymentRepository extends BaseRepository<PaymentDocument> {
     }
     if (query.provider) {
       filter.provider = query.provider;
+    }
+    if (query.search) {
+      const searchRegex = new RegExp(query.search.trim(), 'i');
+      filter.$or = [
+        { reference: searchRegex },
+        { providerReference: searchRegex },
+        { voterEmail: searchRegex },
+      ];
     }
 
     const [payments, total] = await Promise.all([

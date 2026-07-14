@@ -27,6 +27,7 @@ export declare class AdminTransactionQueryDto {
     contestantId?: string;
     status?: PaymentStatus;
     voterEmail?: string;
+    search?: string;
     provider?: PaymentProvider;
 }
 export declare class AdminVoteHistoryQueryDto {
