@@ -59,6 +59,9 @@ exports.VoteLedger = VoteLedger = __decorate([
     })
 ], VoteLedger);
 exports.VoteLedgerSchema = mongoose_1.SchemaFactory.createForClass(VoteLedger);
-exports.VoteLedgerSchema.index({ paymentId: 1 }, { unique: true, sparse: true });
+exports.VoteLedgerSchema.index({ paymentId: 1 }, {
+    unique: true,
+    partialFilterExpression: { paymentId: { $exists: true, $ne: null } },
+});
 exports.VoteLedgerSchema.index({ providerReference: 1 }, { sparse: true });
 //# sourceMappingURL=vote-ledger.schema.js.map

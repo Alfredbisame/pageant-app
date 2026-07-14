@@ -34,5 +34,11 @@ export class VoteLedger {
 }
 
 export const VoteLedgerSchema = SchemaFactory.createForClass(VoteLedger);
-VoteLedgerSchema.index({ paymentId: 1 }, { unique: true, sparse: true });
+VoteLedgerSchema.index(
+  { paymentId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { paymentId: { $exists: true, $ne: null } },
+  },
+);
 VoteLedgerSchema.index({ providerReference: 1 }, { sparse: true });
