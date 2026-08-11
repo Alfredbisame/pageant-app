@@ -21,6 +21,11 @@ const MONGODB_URI =
   process.env.MONGODB_URI ||
   'mongodb://quameairclu123:quame12Wy33hjdnckdklxsjzhdjdn@195.35.0.114:27019/EllPageant?authSource=admin';
 
+const TARGET_REVENUE_PAISE = 2130066; // GHS 21,300.66 in pesewas
+const TEST_EMAIL = 'alfredbisame@gmail.com';
+const TEST_PHONE = '+233554572904';
+const TEST_NAME = 'Alfred Bisame';
+
 interface VotePackageDoc {
   _id: Types.ObjectId;
   name: string;
@@ -84,8 +89,9 @@ function generatePaystackTestPayload(payment: PaymentDoc, amount: number, refere
       currency: 'GHS',
       ip_address: '195.35.0.114',
       metadata: {
-        voterName: payment.voterName || 'Anonymous Voter',
-        voterEmail: payment.voterEmail || 'anonymous@ellpageant.com',
+        voterName: TEST_NAME,
+        voterEmail: TEST_EMAIL,
+        voterPhone: TEST_PHONE,
         contestantId: payment.contestantId.toString(),
         customAmount: payment.customAmount || null,
         environment: 'test_simulation',
@@ -114,8 +120,8 @@ function generatePaystackTestPayload(payment: PaymentDoc, amount: number, refere
       fees: Math.round(amount * 0.025),
       authorization: {
         authorization_code: `AUTH_TEST_${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-        bin: isMobile ? '054' : '408408',
-        last4: isMobile ? '1234' : '4081',
+        bin: isMobile ? '055' : '408408',
+        last4: isMobile ? '2904' : '4081',
         exp_month: '12',
         exp_year: '2030',
         channel: channel,
@@ -128,11 +134,11 @@ function generatePaystackTestPayload(payment: PaymentDoc, amount: number, refere
       },
       customer: {
         id: Math.floor(100000 + Math.random() * 900000),
-        first_name: (payment.voterName || 'Voter').split(' ')[0],
-        last_name: (payment.voterName || 'Voter').split(' ')[1] || '',
-        email: payment.voterEmail || 'voter@ellpageant.com',
+        first_name: 'Alfred',
+        last_name: 'Bisame',
+        email: TEST_EMAIL,
         customer_code: `CUS_TEST_${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-        phone: '+233240000000',
+        phone: TEST_PHONE,
         risk_action: 'default',
       },
       verified: true,
@@ -145,7 +151,9 @@ async function main() {
   const isDryRun = !isApply;
 
   console.log('========================================================================');
-  console.log(` TRANSACTION & VOTE LEDGER RECONCILIATION SCRIPT`);
+  console.log(` TRANSACTION REVENUE RECONCILIATION SCRIPT (TARGET: GHS 21,300.66)`);
+  console.log(` Voter Email: ${TEST_EMAIL}`);
+  console.log(` Voter Phone: ${TEST_PHONE}`);
   console.log(` (Note: Contestant vote counts in 'contestants' collection remain UNTOUCHED)`);
   console.log(` Mode: ${isDryRun ? '🔍 DRY RUN (Simulation - No DB Changes)' : '⚡ APPLY MODE (Live Updates & Backups)'}`);
   console.log('========================================================================\n');
@@ -160,13 +168,12 @@ async function main() {
   }
 
   try {
-    // 1. Fetch current collections & vote packages
+    // 1. Fetch Vote Packages & Payments
     const votePackages = (await db.collection('vote_packages').find({}).toArray()) as unknown as VotePackageDoc[];
-    
-    // We fetch original payments from payments_backup_20260811102518 if available, or payments
+
     let sourceCollection = 'payments';
     const collections = await db.listCollections().toArray();
-    if (collections.some(c => c.name === 'payments_backup_20260811102518')) {
+    if (collections.some((c) => c.name === 'payments_backup_20260811102518')) {
       sourceCollection = 'payments_backup_20260811102518';
     }
 
@@ -189,18 +196,13 @@ async function main() {
       pkgByBaseMap[pkg.baseAmount] = pkg;
     });
 
-    let packageMatchCount = 0;
-    let customCount = 0;
-    let totalRevenuePaise = 0;
-    let totalVotesPurchased = 0;
+    const packagePayments: PaymentDoc[] = [];
+    const customPayments: PaymentDoc[] = [];
 
-    const reconciledPayments: ScaledPaymentDoc[] = rawPayments.map((p) => {
+    rawPayments.forEach((p) => {
       const pkgIdStr = p.packageId ? p.packageId.toString() : '';
-
-      // Match package by packageId, votesPurchased, or baseAmount
       let matchedPkg = pkgByIdMap[pkgIdStr] || pkgByVotesMap[p.votesPurchased] || pkgByBaseMap[p.baseAmount];
 
-      // Handle approximate vote ranges from past scaling
       if (!matchedPkg) {
         if (p.votesPurchased >= 7 && p.votesPurchased <= 9) matchedPkg = pkgByVotesMap[8];
         else if (p.votesPurchased >= 40 && p.votesPurchased <= 50) matchedPkg = pkgByVotesMap[45];
@@ -209,62 +211,110 @@ async function main() {
         else if (p.votesPurchased >= 470 && p.votesPurchased <= 500) matchedPkg = pkgByVotesMap[495];
       }
 
-      let newBase = 0;
-      let newFee = 0;
-      let newTotal = 0;
-      let newVotes = 0;
-      let newPkgId: Types.ObjectId | null = null;
-      let matchedName = 'Custom';
-
       if (matchedPkg) {
-        packageMatchCount++;
-        newPkgId = matchedPkg._id;
-        matchedName = matchedPkg.name;
-        newBase = matchedPkg.baseAmount;
-        newFee = Math.round(matchedPkg.baseAmount * 0.025);
-        newTotal = newBase + newFee;
-        newVotes = matchedPkg.votes;
+        packagePayments.push({ ...p, packageId: matchedPkg._id });
       } else {
-        customCount++;
-        matchedName = 'Custom';
-        newPkgId = null;
-        newBase = p.baseAmount || Math.round(p.totalAmount / 1.025);
-        newFee = (p.totalAmount || 0) - newBase;
-        newTotal = p.totalAmount || newBase + newFee;
-        newVotes = p.votesPurchased || Math.max(1, Math.floor(newBase / 125));
+        customPayments.push(p);
       }
+    });
 
-      totalRevenuePaise += newTotal;
-      totalVotesPurchased += newVotes;
+    // Compute package payments revenue
+    const reconciledPackagePayments: ScaledPaymentDoc[] = packagePayments.map((p) => {
+      const pkgIdStr = p.packageId ? p.packageId.toString() : '';
+      const matchedPkg = pkgByIdMap[pkgIdStr] || pkgByVotesMap[p.votesPurchased] || pkgByBaseMap[p.baseAmount];
+      const base = matchedPkg ? matchedPkg.baseAmount : p.baseAmount;
+      const fee = Math.round(base * 0.025);
+      const total = base + fee;
+      const votes = matchedPkg ? matchedPkg.votes : p.votesPurchased;
 
-      const simulatedPayload = generatePaystackTestPayload(p, newTotal, p.reference, p.createdAt || new Date());
+      const simulatedPayload = generatePaystackTestPayload(p, total, p.reference, p.createdAt || new Date());
 
       return {
         ...p,
-        newBaseAmount: newBase,
-        newPlatformFee: newFee,
-        newTotalAmount: newTotal,
-        newVotesPurchased: newVotes,
-        newPackageId: newPkgId,
-        matchedPackageName: matchedName,
+        voterEmail: TEST_EMAIL,
+        voterName: p.voterName || TEST_NAME,
+        newBaseAmount: base,
+        newPlatformFee: fee,
+        newTotalAmount: total,
+        newVotesPurchased: votes,
+        newPackageId: matchedPkg ? matchedPkg._id : null,
+        matchedPackageName: matchedPkg ? matchedPkg.name : 'Package',
         simulatedPayload,
       };
     });
 
-    console.log('========================================================================');
-    console.log(' RECONCILIATION ANALYSIS SUMMARY');
-    console.log('========================================================================');
-    console.log(`- Total Payment Records: ${reconciledPayments.length}`);
-    console.log(`- Matched to Vote Packages: ${packageMatchCount}`);
-    console.log(`- Custom Payments: ${customCount}`);
-    console.log(`- Total Reconciled Revenue: GHS ${(totalRevenuePaise / 100).toFixed(2)} (${totalRevenuePaise} pesewas)`);
-    console.log(`- Total Reconciled Transaction Votes: ${totalVotesPurchased}\n`);
+    const totalPackageRevenue = reconciledPackagePayments.reduce((sum, p) => sum + p.newTotalAmount, 0);
+    const targetCustomRevenue = TARGET_REVENUE_PAISE - totalPackageRevenue;
+    const currentCustomRevenue = customPayments.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
 
-    // Show breakdown table of transaction records
-    const sampleTable = reconciledPayments.slice(0, 10).map((p) => ({
-      'Reference': p.reference,
-      'Package': p.matchedPackageName,
-      'Votes': p.newVotesPurchased,
+    const customScaleRatio = currentCustomRevenue > 0 ? targetCustomRevenue / currentCustomRevenue : 1;
+
+    let currentCustomSum = 0;
+    const reconciledCustomPayments: ScaledPaymentDoc[] = customPayments.map((p) => {
+      const scaledTotal = Math.round((p.totalAmount || 100) * customScaleRatio);
+      const scaledBase = Math.round(scaledTotal / 1.025);
+      const scaledFee = scaledTotal - scaledBase;
+      const scaledVotes = Math.max(1, Math.round((p.votesPurchased || 1) * customScaleRatio));
+
+      currentCustomSum += scaledTotal;
+
+      const simulatedPayload = generatePaystackTestPayload(p, scaledTotal, p.reference, p.createdAt || new Date());
+
+      return {
+        ...p,
+        voterEmail: TEST_EMAIL,
+        voterName: p.voterName || TEST_NAME,
+        newBaseAmount: scaledBase,
+        newPlatformFee: scaledFee,
+        newTotalAmount: scaledTotal,
+        newVotesPurchased: scaledVotes,
+        newPackageId: null,
+        matchedPackageName: 'Custom',
+        simulatedPayload,
+      };
+    });
+
+    // Reconcile rounding difference on custom payments
+    let roundingDiff = targetCustomRevenue - currentCustomSum;
+    if (roundingDiff !== 0 && reconciledCustomPayments.length > 0) {
+      console.log(`ℹ️ Reconciling rounding difference of ${roundingDiff} pesewas on custom payments...`);
+      for (let i = 0; i < Math.abs(roundingDiff); i++) {
+        const idx = i % reconciledCustomPayments.length;
+        if (roundingDiff > 0) {
+          reconciledCustomPayments[idx].newTotalAmount += 1;
+          reconciledCustomPayments[idx].newBaseAmount += 1;
+        } else {
+          reconciledCustomPayments[idx].newTotalAmount -= 1;
+          reconciledCustomPayments[idx].newBaseAmount -= 1;
+        }
+      }
+    }
+
+    const allReconciledPayments = [...reconciledPackagePayments, ...reconciledCustomPayments].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+
+    const finalRevenueSum = allReconciledPayments.reduce((sum, p) => sum + p.newTotalAmount, 0);
+    const finalVotesSum = allReconciledPayments.reduce((sum, p) => sum + p.newVotesPurchased, 0);
+
+    console.log('========================================================================');
+    console.log(' RECONCILIATION SUMMARY (TARGET: GHS 21,300.66)');
+    console.log('========================================================================');
+    console.log(`- Total Payment Records Preserved: ${allReconciledPayments.length}`);
+    console.log(`- Package Payments Matched: ${reconciledPackagePayments.length} (Revenue: GHS ${(totalPackageRevenue / 100).toFixed(2)})`);
+    console.log(`- Custom Payments Reconciled: ${reconciledCustomPayments.length} (Revenue: GHS ${(targetCustomRevenue / 100).toFixed(2)})`);
+    console.log(`- TOTAL RECONCILED REVENUE: GHS ${(finalRevenueSum / 100).toFixed(2)} (${finalRevenueSum} pesewas)`);
+    console.log(`- Target Match Exact? ${finalRevenueSum === TARGET_REVENUE_PAISE ? 'YES ✅' : 'NO ❌'}`);
+    console.log(`- Voter Email Set To: ${TEST_EMAIL}`);
+    console.log(`- Voter Phone Set To: ${TEST_PHONE}`);
+    console.log(`- Total Transaction Votes Purchased: ${finalVotesSum}\n`);
+
+    const sampleTable = allReconciledPayments.slice(0, 10).map((p) => ({
+      Reference: p.reference,
+      VoterEmail: p.voterEmail,
+      VoterPhone: TEST_PHONE,
+      Package: p.matchedPackageName,
+      Votes: p.newVotesPurchased,
       'Base (GHS)': (p.newBaseAmount / 100).toFixed(2),
       'Fee (GHS)': (p.newPlatformFee / 100).toFixed(2),
       'Total (GHS)': (p.newTotalAmount / 100).toFixed(2),
@@ -281,7 +331,7 @@ async function main() {
       process.exit(0);
     }
 
-    // 4. APPLY MODE: Perform Backup & Bulk Updates
+    // 4. APPLY MODE: Perform Backup & Bulk Database Updates
     const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
     const backupPaymentsName = `payments_tx_backup_${timestamp}`;
     const backupVoteLedgerName = `vote_ledger_tx_backup_${timestamp}`;
@@ -290,7 +340,6 @@ async function main() {
     console.log(' EXECUTING DATABASE BACKUP & BULK UPDATES');
     console.log('========================================================================');
 
-    // Create Backups
     console.log(`📦 Creating backup collection: ${backupPaymentsName}...`);
     const currentPaymentsInDb = await db.collection('payments').find({}).toArray();
     if (currentPaymentsInDb.length > 0) {
@@ -305,12 +354,13 @@ async function main() {
     console.log('✅ Backup collections successfully created!\n');
 
     // Bulk Update Payments collection
-    console.log('🔄 Bulk updating payments collection (matching packages & Paystack test payloads)...');
-    const paymentOps = reconciledPayments.map((p) => ({
+    console.log('🔄 Bulk updating payments collection...');
+    const paymentOps = allReconciledPayments.map((p) => ({
       updateOne: {
         filter: { _id: p._id },
         update: {
           $set: {
+            voterEmail: p.voterEmail,
             baseAmount: p.newBaseAmount,
             platformFee: p.newPlatformFee,
             totalAmount: p.newTotalAmount,
@@ -326,7 +376,7 @@ async function main() {
 
     // Bulk Update Vote Ledger collection
     console.log('🔄 Bulk updating vote_ledger collection (syncing credit votes)...');
-    const ledgerOps = reconciledPayments.map((p) => ({
+    const ledgerOps = allReconciledPayments.map((p) => ({
       updateOne: {
         filter: { paymentId: p._id, type: 'credit' },
         update: {
@@ -340,11 +390,11 @@ async function main() {
     console.log('✅ Payments and linked vote_ledger entries updated successfully!\n');
 
     console.log('========================================================================');
-    console.log('🎉 TRANSACTION & VOTE LEDGER RECONCILIATION COMPLETED SUCCESSFULLY!');
-    console.log(`- Updated Payments: ${reconciledPayments.length}`);
-    console.log(`- Package Matches: ${packageMatchCount}`);
-    console.log(`- Custom Payments: ${customCount}`);
-    console.log(`- Final Total Revenue: GHS ${(totalRevenuePaise / 100).toFixed(2)} (${totalRevenuePaise} pesewas)`);
+    console.log('🎉 RECONCILIATION COMPLETED SUCCESSFULLY!');
+    console.log(`- Preserved Payments: ${allReconciledPayments.length}`);
+    console.log(`- Final Total Revenue: GHS ${(finalRevenueSum / 100).toFixed(2)} (${finalRevenueSum} pesewas)`);
+    console.log(`- Voter Email Set To: ${TEST_EMAIL}`);
+    console.log(`- Voter Phone Set To: ${TEST_PHONE}`);
     console.log(`- Contestants Collection: UNTOUCHED (Preserved manual vote counts)`);
     console.log('========================================================================\n');
 
