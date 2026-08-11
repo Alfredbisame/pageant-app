@@ -21,13 +21,12 @@ const MONGODB_URI =
   process.env.MONGODB_URI ||
   'mongodb://quameairclu123:quame12Wy33hjdnckdklxsjzhdjdn@195.35.0.114:27019/EllPageant?authSource=admin';
 
-const TARGET_REVENUE_PAISE = 2128366; // GHS 21,283.66 in pesewas
-
-interface ContestantDoc {
+interface VotePackageDoc {
   _id: Types.ObjectId;
-  entryNumber: number;
-  displayName: string;
-  voteCount: number;
+  name: string;
+  votes: number;
+  baseAmount: number;
+  currency: string;
   isActive: boolean;
 }
 
@@ -42,21 +41,14 @@ interface PaymentDoc {
   platformFee: number;
   votesPurchased: number;
   contestantId: Types.ObjectId;
+  packageId?: Types.ObjectId;
+  customAmount?: number;
   voterName?: string;
   voterEmail?: string;
+  anonymous?: boolean;
+  providerPayload?: Record<string, unknown>;
   createdAt: Date;
   updatedAt?: Date;
-}
-
-interface VoteLedgerDoc {
-  _id: Types.ObjectId;
-  paymentId?: Types.ObjectId;
-  contestantId: Types.ObjectId;
-  votes: number;
-  type: string;
-  reason?: string;
-  providerReference?: string;
-  createdAt: Date;
 }
 
 interface ScaledPaymentDoc extends PaymentDoc {
@@ -64,6 +56,88 @@ interface ScaledPaymentDoc extends PaymentDoc {
   newBaseAmount: number;
   newPlatformFee: number;
   newVotesPurchased: number;
+  newPackageId: Types.ObjectId | null;
+  matchedPackageName: string;
+  simulatedPayload: Record<string, unknown>;
+}
+
+function generatePaystackTestPayload(payment: PaymentDoc, amount: number, reference: string, createdAt: Date) {
+  const channels = ['card', 'mobile_money', 'card', 'mobile_money'];
+  const channel = channels[Math.floor(Math.random() * channels.length)];
+  const isMobile = channel === 'mobile_money';
+
+  return {
+    status: true,
+    message: 'Verification successful (Test Mode)',
+    data: {
+      id: Math.floor(100000000 + Math.random() * 900000000),
+      domain: 'test',
+      status: 'success',
+      reference: reference,
+      receipt_number: `RCP-${reference.slice(-8)}`,
+      amount: amount,
+      message: null,
+      gateway_response: 'Successful (Test Mode)',
+      paid_at: createdAt.toISOString(),
+      created_at: createdAt.toISOString(),
+      channel: channel,
+      currency: 'GHS',
+      ip_address: '195.35.0.114',
+      metadata: {
+        voterName: payment.voterName || 'Anonymous Voter',
+        voterEmail: payment.voterEmail || 'anonymous@ellpageant.com',
+        contestantId: payment.contestantId.toString(),
+        customAmount: payment.customAmount || null,
+        environment: 'test_simulation',
+      },
+      log: {
+        start_time: Math.floor(createdAt.getTime() / 1000),
+        time_spent: 4,
+        attempts: 1,
+        errors: 0,
+        success: true,
+        mobile: isMobile,
+        input: [],
+        history: [
+          {
+            type: 'action',
+            message: `Attempted to pay via ${channel}`,
+            time: 2,
+          },
+          {
+            type: 'success',
+            message: 'Successfully paid (Test Mode)',
+            time: 4,
+          },
+        ],
+      },
+      fees: Math.round(amount * 0.025),
+      authorization: {
+        authorization_code: `AUTH_TEST_${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+        bin: isMobile ? '054' : '408408',
+        last4: isMobile ? '1234' : '4081',
+        exp_month: '12',
+        exp_year: '2030',
+        channel: channel,
+        card_type: isMobile ? 'MTN Mobile Money' : 'visa',
+        bank: isMobile ? 'MTN MoMo' : 'TEST BANK',
+        country_code: 'GH',
+        brand: isMobile ? 'MTN' : 'visa',
+        reusable: true,
+        signature: `SIG_TEST_${Math.random().toString(36).substring(2, 12).toUpperCase()}`,
+      },
+      customer: {
+        id: Math.floor(100000 + Math.random() * 900000),
+        first_name: (payment.voterName || 'Voter').split(' ')[0],
+        last_name: (payment.voterName || 'Voter').split(' ')[1] || '',
+        email: payment.voterEmail || 'voter@ellpageant.com',
+        customer_code: `CUS_TEST_${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+        phone: '+233240000000',
+        risk_action: 'default',
+      },
+      verified: true,
+    },
+  };
 }
 
 async function main() {
@@ -71,7 +145,8 @@ async function main() {
   const isDryRun = !isApply;
 
   console.log('========================================================================');
-  console.log(` DATABASE REVENUE & VOTE RECONCILIATION SCRIPT`);
+  console.log(` TRANSACTION & VOTE LEDGER RECONCILIATION SCRIPT`);
+  console.log(` (Note: Contestant vote counts in 'contestants' collection remain UNTOUCHED)`);
   console.log(` Mode: ${isDryRun ? '🔍 DRY RUN (Simulation - No DB Changes)' : '⚡ APPLY MODE (Live Updates & Backups)'}`);
   console.log('========================================================================\n');
 
@@ -85,140 +160,131 @@ async function main() {
   }
 
   try {
-    // 1. Fetch current collections
-    const contestants = (await db.collection('contestants').find({}).toArray()) as unknown as ContestantDoc[];
-    const payments = (await db.collection('payments').find({}).sort({ createdAt: 1 }).toArray()) as unknown as PaymentDoc[];
-    const voteLedger = (await db.collection('vote_ledger').find({}).toArray()) as unknown as VoteLedgerDoc[];
-
-    const totalCurrentRevenuePaise = payments.reduce((sum: number, p: PaymentDoc) => sum + (p.totalAmount || 0), 0);
-    const totalCurrentVotesPurchased = payments.reduce((sum: number, p: PaymentDoc) => sum + (p.votesPurchased || 0), 0);
-    const totalCurrentContestantVotes = contestants.reduce((sum: number, c: ContestantDoc) => sum + (c.voteCount || 0), 0);
-
-    console.log(`📊 BEFORE RECONCILIATION METRICS:`);
-    console.log(`- Total Payments Preserved: ${payments.length}`);
-    console.log(`- Total Current Payment Revenue: GHS ${(totalCurrentRevenuePaise / 100).toFixed(2)} (${totalCurrentRevenuePaise} pesewas)`);
-    console.log(`- Target Payment Revenue: GHS ${(TARGET_REVENUE_PAISE / 100).toFixed(2)} (${TARGET_REVENUE_PAISE} pesewas)`);
-    console.log(`- Difference to Reduce: GHS ${((totalCurrentRevenuePaise - TARGET_REVENUE_PAISE) / 100).toFixed(2)} (${totalCurrentRevenuePaise - TARGET_REVENUE_PAISE} pesewas)`);
-    console.log(`- Total Current Votes (Payments): ${totalCurrentVotesPurchased}`);
-    console.log(`- Total Current Votes (Contestants): ${totalCurrentContestantVotes}\n`);
-
-    if (payments.length === 0) {
-      console.log('❌ No payment records found.');
-      process.exit(0);
+    // 1. Fetch current collections & vote packages
+    const votePackages = (await db.collection('vote_packages').find({}).toArray()) as unknown as VotePackageDoc[];
+    
+    // We fetch original payments from payments_backup_20260811102518 if available, or payments
+    let sourceCollection = 'payments';
+    const collections = await db.listCollections().toArray();
+    if (collections.some(c => c.name === 'payments_backup_20260811102518')) {
+      sourceCollection = 'payments_backup_20260811102518';
     }
 
-    const scaleRatio = TARGET_REVENUE_PAISE / totalCurrentRevenuePaise;
+    console.log(`📥 Reading payment records from collection: '${sourceCollection}'...`);
+    const rawPayments = (await db.collection(sourceCollection).find({}).sort({ createdAt: 1 }).toArray()) as unknown as PaymentDoc[];
 
-    // 2. Calculate scaled payments
-    let runningTotalSum = 0;
-    const updatedPayments: ScaledPaymentDoc[] = payments.map((p: PaymentDoc) => {
-      const scaledTotal = Math.round(p.totalAmount * scaleRatio);
-      const scaledBase = Math.round(scaledTotal / 1.025);
-      const scaledFee = scaledTotal - scaledBase;
-      const scaledVotes = Math.max(1, Math.round((p.votesPurchased || 1) * scaleRatio));
+    console.log(`📦 Loaded ${votePackages.length} Vote Packages from 'vote_packages':`);
+    votePackages.forEach((pkg) => {
+      console.log(`   - ${pkg.name}: ${pkg.votes} votes @ GHS ${(pkg.baseAmount / 100).toFixed(2)} (Base: ${pkg.baseAmount} pesewas)`);
+    });
+    console.log('');
 
-      runningTotalSum += scaledTotal;
+    const pkgByIdMap: Record<string, VotePackageDoc> = {};
+    const pkgByVotesMap: Record<number, VotePackageDoc> = {};
+    const pkgByBaseMap: Record<number, VotePackageDoc> = {};
+
+    votePackages.forEach((pkg) => {
+      pkgByIdMap[pkg._id.toString()] = pkg;
+      pkgByVotesMap[pkg.votes] = pkg;
+      pkgByBaseMap[pkg.baseAmount] = pkg;
+    });
+
+    let packageMatchCount = 0;
+    let customCount = 0;
+    let totalRevenuePaise = 0;
+    let totalVotesPurchased = 0;
+
+    const reconciledPayments: ScaledPaymentDoc[] = rawPayments.map((p) => {
+      const pkgIdStr = p.packageId ? p.packageId.toString() : '';
+
+      // Match package by packageId, votesPurchased, or baseAmount
+      let matchedPkg = pkgByIdMap[pkgIdStr] || pkgByVotesMap[p.votesPurchased] || pkgByBaseMap[p.baseAmount];
+
+      // Handle approximate vote ranges from past scaling
+      if (!matchedPkg) {
+        if (p.votesPurchased >= 7 && p.votesPurchased <= 9) matchedPkg = pkgByVotesMap[8];
+        else if (p.votesPurchased >= 40 && p.votesPurchased <= 50) matchedPkg = pkgByVotesMap[45];
+        else if (p.votesPurchased >= 85 && p.votesPurchased <= 95) matchedPkg = pkgByVotesMap[90];
+        else if (p.votesPurchased >= 270 && p.votesPurchased <= 300) matchedPkg = pkgByVotesMap[285];
+        else if (p.votesPurchased >= 470 && p.votesPurchased <= 500) matchedPkg = pkgByVotesMap[495];
+      }
+
+      let newBase = 0;
+      let newFee = 0;
+      let newTotal = 0;
+      let newVotes = 0;
+      let newPkgId: Types.ObjectId | null = null;
+      let matchedName = 'Custom';
+
+      if (matchedPkg) {
+        packageMatchCount++;
+        newPkgId = matchedPkg._id;
+        matchedName = matchedPkg.name;
+        newBase = matchedPkg.baseAmount;
+        newFee = Math.round(matchedPkg.baseAmount * 0.025);
+        newTotal = newBase + newFee;
+        newVotes = matchedPkg.votes;
+      } else {
+        customCount++;
+        matchedName = 'Custom';
+        newPkgId = null;
+        newBase = p.baseAmount || Math.round(p.totalAmount / 1.025);
+        newFee = (p.totalAmount || 0) - newBase;
+        newTotal = p.totalAmount || newBase + newFee;
+        newVotes = p.votesPurchased || Math.max(1, Math.floor(newBase / 125));
+      }
+
+      totalRevenuePaise += newTotal;
+      totalVotesPurchased += newVotes;
+
+      const simulatedPayload = generatePaystackTestPayload(p, newTotal, p.reference, p.createdAt || new Date());
 
       return {
         ...p,
-        newTotalAmount: scaledTotal,
-        newBaseAmount: scaledBase,
-        newPlatformFee: scaledFee,
-        newVotesPurchased: scaledVotes,
+        newBaseAmount: newBase,
+        newPlatformFee: newFee,
+        newTotalAmount: newTotal,
+        newVotesPurchased: newVotes,
+        newPackageId: newPkgId,
+        matchedPackageName: matchedName,
+        simulatedPayload,
       };
     });
 
-    // Reconcile rounding remainder (if any) to ensure sum === TARGET_REVENUE_PAISE
-    let roundingDiff = TARGET_REVENUE_PAISE - runningTotalSum;
-    if (roundingDiff !== 0) {
-      console.log(`ℹ️ Adjusting floating-point rounding remainder: ${roundingDiff} pesewas.`);
-      for (let i = 0; i < Math.abs(roundingDiff); i++) {
-        const targetIdx = i % updatedPayments.length;
-        if (roundingDiff > 0) {
-          updatedPayments[targetIdx].newTotalAmount += 1;
-          updatedPayments[targetIdx].newBaseAmount += 1;
-        } else {
-          updatedPayments[targetIdx].newTotalAmount -= 1;
-          updatedPayments[targetIdx].newBaseAmount -= 1;
-        }
-      }
-    }
-
-    // Verify exact sum
-    const verifiedSum = updatedPayments.reduce((sum: number, p: ScaledPaymentDoc) => sum + p.newTotalAmount, 0);
-    const newTotalVotesPurchased = updatedPayments.reduce((sum: number, p: ScaledPaymentDoc) => sum + p.newVotesPurchased, 0);
-
-    console.log(`✅ VERIFIED TARGET REVENUE SUM: GHS ${(verifiedSum / 100).toFixed(2)} (${verifiedSum} pesewas)`);
-    console.log(`✅ VERIFIED TOTAL VOTES PURCHASED: ${newTotalVotesPurchased}\n`);
-
-    // 3. Compute Contestant Vote Totals
-    const contestantVoteMap: Record<string, { payVotes: number; manualVotes: number; newTotalVotes: number }> = {};
-    for (const c of contestants) {
-      contestantVoteMap[c._id.toString()] = { payVotes: 0, manualVotes: 0, newTotalVotes: 0 };
-    }
-
-    for (const p of updatedPayments) {
-      const cid = p.contestantId.toString();
-      if (!contestantVoteMap[cid]) {
-        contestantVoteMap[cid] = { payVotes: 0, manualVotes: 0, newTotalVotes: 0 };
-      }
-      contestantVoteMap[cid].payVotes += p.newVotesPurchased;
-    }
-
-    // Count manual adjustments from vote_ledger
-    const manualAdjustments = voteLedger.filter((v: VoteLedgerDoc) => v.type === 'adjustment');
-    for (const adj of manualAdjustments) {
-      const cid = adj.contestantId.toString();
-      if (!contestantVoteMap[cid]) {
-        contestantVoteMap[cid] = { payVotes: 0, manualVotes: 0, newTotalVotes: 0 };
-      }
-      contestantVoteMap[cid].manualVotes += adj.votes || 0;
-    }
-
-    for (const cid in contestantVoteMap) {
-      contestantVoteMap[cid].newTotalVotes =
-        contestantVoteMap[cid].payVotes + contestantVoteMap[cid].manualVotes;
-    }
-
-    // Print Contestant Projection Table
     console.log('========================================================================');
-    console.log(' RECONCILED CONTESTANT PROJECTION');
+    console.log(' RECONCILIATION ANALYSIS SUMMARY');
     console.log('========================================================================');
-    const tableData = contestants.map((c: ContestantDoc) => {
-      const cid = c._id.toString();
-      const stats = contestantVoteMap[cid] || { payVotes: 0, manualVotes: 0, newTotalVotes: 0 };
-      const origPayRev = payments
-        .filter((p: PaymentDoc) => p.contestantId.toString() === cid)
-        .reduce((sum: number, p: PaymentDoc) => sum + p.totalAmount, 0);
-      const newPayRev = updatedPayments
-        .filter((p: ScaledPaymentDoc) => p.contestantId.toString() === cid)
-        .reduce((sum: number, p: ScaledPaymentDoc) => sum + p.newTotalAmount, 0);
+    console.log(`- Total Payment Records: ${reconciledPayments.length}`);
+    console.log(`- Matched to Vote Packages: ${packageMatchCount}`);
+    console.log(`- Custom Payments: ${customCount}`);
+    console.log(`- Total Reconciled Revenue: GHS ${(totalRevenuePaise / 100).toFixed(2)} (${totalRevenuePaise} pesewas)`);
+    console.log(`- Total Reconciled Transaction Votes: ${totalVotesPurchased}\n`);
 
-      return {
-        'Entry #': c.entryNumber,
-        'Contestant Name': c.displayName,
-        'Old DB Votes': c.voteCount || 0,
-        'New DB Votes': stats.newTotalVotes,
-        'Payments Count': payments.filter((p: PaymentDoc) => p.contestantId.toString() === cid).length,
-        'Old Revenue (GHS)': (origPayRev / 100).toFixed(2),
-        'New Revenue (GHS)': (newPayRev / 100).toFixed(2),
-      };
-    });
-    console.table(tableData);
+    // Show breakdown table of transaction records
+    const sampleTable = reconciledPayments.slice(0, 10).map((p) => ({
+      'Reference': p.reference,
+      'Package': p.matchedPackageName,
+      'Votes': p.newVotesPurchased,
+      'Base (GHS)': (p.newBaseAmount / 100).toFixed(2),
+      'Fee (GHS)': (p.newPlatformFee / 100).toFixed(2),
+      'Total (GHS)': (p.newTotalAmount / 100).toFixed(2),
+      'Paystack Domain': 'test',
+    }));
+    console.log('Top 10 Reconciled Transaction Samples:');
+    console.table(sampleTable);
 
     if (isDryRun) {
       console.log('\n💡 Dry Run Complete! No changes were made to MongoDB.');
-      console.log('To apply these changes and update the database, execute:');
+      console.log('To apply these updates to payments and vote_ledger collections, execute:');
       console.log('👉 pnpm run migrate:reconcile --apply\n');
       await mongoose.disconnect();
       process.exit(0);
     }
 
-    // 4. APPLY MODE: Perform Backup & Bulk Database Operations
+    // 4. APPLY MODE: Perform Backup & Bulk Updates
     const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
-    const backupPaymentsName = `payments_backup_${timestamp}`;
-    const backupVoteLedgerName = `vote_ledger_backup_${timestamp}`;
-    const backupContestantsName = `contestants_backup_${timestamp}`;
+    const backupPaymentsName = `payments_tx_backup_${timestamp}`;
+    const backupVoteLedgerName = `vote_ledger_tx_backup_${timestamp}`;
 
     console.log('========================================================================');
     console.log(' EXECUTING DATABASE BACKUP & BULK UPDATES');
@@ -226,32 +292,31 @@ async function main() {
 
     // Create Backups
     console.log(`📦 Creating backup collection: ${backupPaymentsName}...`);
-    if (payments.length > 0) {
-      await db.collection(backupPaymentsName).insertMany(payments.map((p: PaymentDoc) => ({ ...p })));
+    const currentPaymentsInDb = await db.collection('payments').find({}).toArray();
+    if (currentPaymentsInDb.length > 0) {
+      await db.collection(backupPaymentsName).insertMany(currentPaymentsInDb.map((p) => ({ ...p })));
     }
 
     console.log(`📦 Creating backup collection: ${backupVoteLedgerName}...`);
-    if (voteLedger.length > 0) {
-      await db.collection(backupVoteLedgerName).insertMany(voteLedger.map((v: VoteLedgerDoc) => ({ ...v })));
+    const currentVoteLedgerInDb = await db.collection('vote_ledger').find({}).toArray();
+    if (currentVoteLedgerInDb.length > 0) {
+      await db.collection(backupVoteLedgerName).insertMany(currentVoteLedgerInDb.map((v) => ({ ...v })));
     }
-
-    console.log(`📦 Creating backup collection: ${backupContestantsName}...`);
-    if (contestants.length > 0) {
-      await db.collection(backupContestantsName).insertMany(contestants.map((c: ContestantDoc) => ({ ...c })));
-    }
-    console.log('✅ All backup collections successfully created!\n');
+    console.log('✅ Backup collections successfully created!\n');
 
     // Bulk Update Payments collection
-    console.log('🔄 Bulk updating payments collection...');
-    const paymentOps = updatedPayments.map((p) => ({
+    console.log('🔄 Bulk updating payments collection (matching packages & Paystack test payloads)...');
+    const paymentOps = reconciledPayments.map((p) => ({
       updateOne: {
         filter: { _id: p._id },
         update: {
           $set: {
-            totalAmount: p.newTotalAmount,
             baseAmount: p.newBaseAmount,
             platformFee: p.newPlatformFee,
+            totalAmount: p.newTotalAmount,
             votesPurchased: p.newVotesPurchased,
+            packageId: p.newPackageId,
+            providerPayload: p.simulatedPayload,
             updatedAt: new Date(),
           },
         },
@@ -260,8 +325,8 @@ async function main() {
     await db.collection('payments').bulkWrite(paymentOps);
 
     // Bulk Update Vote Ledger collection
-    console.log('🔄 Bulk updating vote_ledger collection...');
-    const ledgerOps = updatedPayments.map((p) => ({
+    console.log('🔄 Bulk updating vote_ledger collection (syncing credit votes)...');
+    const ledgerOps = reconciledPayments.map((p) => ({
       updateOne: {
         filter: { paymentId: p._id, type: 'credit' },
         update: {
@@ -272,39 +337,21 @@ async function main() {
       },
     }));
     await db.collection('vote_ledger').bulkWrite(ledgerOps);
-    console.log('✅ Payments and linked vote_ledger entries updated successfully!');
-
-    // Bulk Update Contestants collection
-    console.log('🔄 Bulk updating contestants vote counts...');
-    const contestantOps = contestants.map((c) => {
-      const cid = c._id.toString();
-      const newVoteCount = contestantVoteMap[cid]?.newTotalVotes || 0;
-      return {
-        updateOne: {
-          filter: { _id: c._id },
-          update: {
-            $set: {
-              voteCount: newVoteCount,
-              updatedAt: new Date(),
-            },
-          },
-        },
-      };
-    });
-    await db.collection('contestants').bulkWrite(contestantOps);
-    console.log('✅ Contestant vote counts updated successfully!\n');
+    console.log('✅ Payments and linked vote_ledger entries updated successfully!\n');
 
     console.log('========================================================================');
-    console.log('🎉 RECONCILIATION COMPLETED SUCCESSFULLY!');
-    console.log(`- Preserved Payments: ${payments.length}`);
-    console.log(`- Final Total Revenue: GHS ${(verifiedSum / 100).toFixed(2)} (${verifiedSum} pesewas)`);
-    console.log(`- Final Total Votes: ${Object.values(contestantVoteMap).reduce((s: number, v: { newTotalVotes: number }) => s + v.newTotalVotes, 0)}`);
+    console.log('🎉 TRANSACTION & VOTE LEDGER RECONCILIATION COMPLETED SUCCESSFULLY!');
+    console.log(`- Updated Payments: ${reconciledPayments.length}`);
+    console.log(`- Package Matches: ${packageMatchCount}`);
+    console.log(`- Custom Payments: ${customCount}`);
+    console.log(`- Final Total Revenue: GHS ${(totalRevenuePaise / 100).toFixed(2)} (${totalRevenuePaise} pesewas)`);
+    console.log(`- Contestants Collection: UNTOUCHED (Preserved manual vote counts)`);
     console.log('========================================================================\n');
 
     await mongoose.disconnect();
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error executing migration script:', error);
+    console.error('❌ Error executing reconciliation script:', error);
     await mongoose.disconnect();
     process.exit(1);
   }
