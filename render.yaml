@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: ell-pageant-api
+    env: node
+    buildCommand: pnpm install && pnpm run build
+    startCommand: pnpm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
